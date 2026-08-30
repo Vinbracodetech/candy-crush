@@ -99,7 +99,7 @@ fun LevelMapScreen(
 
     // Auto scroll near highest unlocked level on start
     LaunchedEffect(highestUnlockedLevel) {
-        val targetIndex = (150 - highestUnlockedLevel).coerceIn(0, 149)
+        val targetIndex = (350 - highestUnlockedLevel).coerceIn(0, 349)
         listState.scrollToItem(targetIndex)
     }
 
@@ -114,7 +114,7 @@ fun LevelMapScreen(
             reverseLayout = false
         ) {
             // Display levels 150 down to 1 (climbing up the mountain of candy)
-            itemsIndexed((150 downTo 1).toList()) { index, levelNum ->
+            itemsIndexed((350 downTo 1).toList()) { index, levelNum ->
                 val progress = levelProgressList.find { it.levelId == levelNum }
                 val isUnlocked = progress?.isUnlocked == true || levelNum == 1
                 val stars = progress?.stars ?: 0
@@ -128,7 +128,7 @@ fun LevelMapScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // World Biome Header Banner if at world boundary
-                    if (levelNum % 20 == 0 || levelNum == 150) {
+                    if (levelNum % 50 == 0) {
                         val (worldName, worldIdx) = LevelGenerator.getWorldInfoForLevel(levelNum)
                         BiomeHeaderBanner(worldName = worldName, worldIndex = worldIdx)
                         Spacer(modifier = Modifier.height(16.dp))

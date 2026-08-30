@@ -1,0 +1,1 @@
+sed -i 's/val baseMoves = when {/val baseMoves = when {\n            levelNumber <= 5 -> 35\n            levelNumber <= 15 -> 32\n            levelNumber <= 30 -> 30\n            levelNumber <= 60 -> 28\n            levelNumber <= 90 -> 25\n            else -> 24/' app/src/main/java/com/example/engine/LevelGenerator.kt

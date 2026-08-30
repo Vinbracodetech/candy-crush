@@ -32,6 +32,7 @@ class AdManager {
     val currentBannerAd: StateFlow<Any?> = MutableStateFlow(null)
 
     var currentActivity: Activity? = null
+    private var isInitialAppOpenAdShown = false
     private var isInitialized = false
 
     private var interstitialAd: InterstitialAd? = null
@@ -79,6 +80,10 @@ class AdManager {
         AppOpenAd.load(context, _config.value.appOpenAdUnitId, adRequest, AppOpenAd.APP_OPEN_AD_ORIENTATION_PORTRAIT, object : AppOpenAd.AppOpenAdLoadCallback() {
             override fun onAdLoaded(ad: AppOpenAd) {
                 appOpenAd = ad
+                if (!isInitialAppOpenAdShown && currentActivity != null) {
+                    isInitialAppOpenAdShown = true
+                    showAppOpenAd()
+                }
             }
             override fun onAdFailedToLoad(error: LoadAdError) {
                 appOpenAd = null

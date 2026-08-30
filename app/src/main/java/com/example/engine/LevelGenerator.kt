@@ -21,12 +21,12 @@ object LevelGenerator {
 
     fun getWorldInfoForLevel(levelNumber: Int): Pair<String, Int> {
         return when {
-            levelNumber <= 20 -> "Sugar Valley" to 1
-            levelNumber <= 40 -> "Frosting Glade" to 2
-            levelNumber <= 60 -> "Choco Highlands" to 3
-            levelNumber <= 80 -> "Berry Drops Bay" to 4
-            levelNumber <= 100 -> "Crystal Nebula" to 5
-            levelNumber <= 125 -> "Rainbow Spire" to 6
+            levelNumber <= 50 -> "Sugar Valley" to 1
+            levelNumber <= 100 -> "Frosting Glade" to 2
+            levelNumber <= 150 -> "Choco Highlands" to 3
+            levelNumber <= 200 -> "Berry Drops Bay" to 4
+            levelNumber <= 250 -> "Crystal Nebula" to 5
+            levelNumber <= 300 -> "Rainbow Spire" to 6
             else -> "Cosmic Confection" to 7
         }
     }
@@ -39,14 +39,16 @@ object LevelGenerator {
         val rows = 8
         val cols = 8
 
-        // Move calculation: slightly tighter as levels increase, but always winnable
+        // Move calculation: much more generous to make game moderate instead of impossible
         val baseMoves = when {
-            levelNumber <= 5 -> 28
-            levelNumber <= 15 -> 26
-            levelNumber <= 30 -> 24
-            levelNumber <= 60 -> 22
-            levelNumber <= 90 -> 20
-            else -> 19
+            levelNumber <= 5 -> 35
+            levelNumber <= 15 -> 33
+            levelNumber <= 30 -> 31
+            levelNumber <= 60 -> 29
+            levelNumber <= 100 -> 28
+            levelNumber <= 200 -> 27
+            levelNumber <= 300 -> 26
+            else -> 25
         } + (random.nextInt(4) - 1)
 
         val colorCount = when {
@@ -124,7 +126,7 @@ object LevelGenerator {
 
             3 -> {
                 // World 3: Choco Highlands (Chocolate Blockers)
-                val chocoCount = 6 + (levelNumber - 40) / 2
+                val chocoCount = Math.min(30, 6 + (levelNumber - 40) / 4)
                 for (i in 0 until chocoCount) {
                     val r = 2 + (i % 4)
                     val c = 1 + (i % 6)
@@ -138,7 +140,7 @@ object LevelGenerator {
             4 -> {
                 // World 4: Berry Drops Bay (Ingredients)
                 ingredientCols = listOf(1, 3, 5, 6).shuffled(random).take(2)
-                maxIngredients = 2 + (levelNumber - 60) / 7
+                maxIngredients = Math.min(5, 2 + (levelNumber - 60) / 10)
                 goals.add(LevelGoal(GoalType.COLLECT_INGREDIENTS, maxIngredients))
                 goals.add(LevelGoal(GoalType.SCORE, target1))
                 // Add some blockers in between

@@ -40,13 +40,13 @@ fun PermanentBannerAd(
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .wrapContentHeight()
             .navigationBarsPadding()
-            .padding(horizontal = 8.dp, vertical = 4.dp)
             .clip(RoundedCornerShape(14.dp)),
         contentAlignment = Alignment.Center
     ) {
         AndroidView(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().wrapContentHeight(),
             factory = { context ->
                 AdView(context).apply {
                     setAdSize(AdSize.BANNER)

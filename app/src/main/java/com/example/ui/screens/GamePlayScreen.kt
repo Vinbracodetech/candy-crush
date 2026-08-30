@@ -105,7 +105,7 @@ fun GamePlayScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .padding(horizontal = 12.dp),
+                .padding(start = 12.dp, end = 12.dp, bottom = 65.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Top HUD Bar (Score, Moves, Goals, Stars, Pause)

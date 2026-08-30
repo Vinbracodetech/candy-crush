@@ -18,8 +18,8 @@ class GameRepository(
         val currentProfile = profileDao.getProfileSync()
         if (currentProfile == null) {
             profileDao.insertOrUpdate(PlayerProfile())
-            // Initialize 150 levels, with level 1 unlocked
-            val defaultLevels = (1..150).map { id ->
+            // Initialize 350 levels, with level 1 unlocked
+            val defaultLevels = (1..350).map { id ->
                 LevelProgress(
                     levelId = id,
                     stars = 0,
@@ -47,7 +47,7 @@ class GameRepository(
         )
 
         // Unlock next level if exists
-        if (levelId < 150) {
+        if (levelId < 350) {
             val nextLevel = levelDao.getProgressForLevel(levelId + 1)
             if (nextLevel == null || !nextLevel.isUnlocked) {
                 levelDao.insertOrUpdate(
