@@ -1,0 +1,6 @@
+{
+  "name": "Candy Crush Glass",
+  "description": "Vibrant glassmorphic match-3 puzzle game with 100+ progressive levels, special candy combos, power-up boosters, and full ad monetization system.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
