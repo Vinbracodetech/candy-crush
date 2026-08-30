@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ads.RewardReason
 import com.example.ui.components.AdMonetizationDashboardDialog
-import com.example.ui.components.FullscreenAdModal
 import com.example.ui.components.GlassBackground
 import com.example.ui.components.PermanentBannerAd
 import com.example.ui.screens.BoosterShopDialog
@@ -31,11 +30,20 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        viewModel.adManager.init(this)
+        viewModel.adManager.currentActivity = this
         enableEdgeToEdge()
         setContent {
             MyApplicationTheme {
                 CandyCrushGlassApp(viewModel = viewModel)
             }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (viewModel.adManager.currentActivity == this) {
+            viewModel.adManager.currentActivity = null
         }
     }
 }
@@ -100,23 +108,13 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
 
             // Permanent Bottom Banner Ad
             PermanentBannerAd(
-                currentAd = currentBannerAd,
-                onAdClick = {
-                    // Open ad or show interstitial preview
-                    viewModel.adManager.showInterstitial(onDismiss = {})
-                },
-                onOpenAdSettings = { viewModel.showMonetizationDialog.value = true },
+                adUnitId = adConfig.bannerAdUnitId,
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
         }
 
-        // Fullscreen Active Ad Modal (Interstitial, Rewarded, Rewarded Interstitial, App Open)
-        activeAdState?.let { adState ->
-            FullscreenAdModal(
-                adState = adState,
-                onClose = { viewModel.adManager.closeActiveAd() }
-            )
-        }
+        // Active ad state is now managed completely by native Google AdMob SDK.
+        // Fullscreen active ad modals are no longer simulated in Compose.
 
         // Booster Shop & Lives Dialog
         if (showShop) {
