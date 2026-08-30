@@ -40,12 +40,17 @@ import com.example.data.model.SpecialType
 import com.example.data.model.TileObstacle
 import com.example.ui.theme.NeonGoldTertiary
 
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import kotlin.math.abs
+
 @Composable
 fun CandyTileView(
     tile: CandyTile?,
     obstacle: TileObstacle,
     isSelected: Boolean,
     onClick: () -> Unit,
+    onSwipe: (Float, Float) -> Unit = {_,_->},
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "candy_anim")
@@ -104,7 +109,28 @@ fun CandyTileView(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = ripple(bounded = true, color = Color.White),
                 onClick = onClick
-            ),
+            )
+            .pointerInput(Unit) {
+                var totalDragX = 0f
+                var totalDragY = 0f
+                detectDragGestures(
+                    onDragStart = { 
+                        totalDragX = 0f
+                        totalDragY = 0f
+                        onClick() 
+                    },
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        totalDragX += dragAmount.x
+                        totalDragY += dragAmount.y
+                        if (abs(totalDragX) > 50f || abs(totalDragY) > 50f) {
+                            onSwipe(totalDragX, totalDragY)
+                            totalDragX = 0f
+                            totalDragY = 0f
+                        }
+                    }
+                )
+            },
         contentAlignment = Alignment.Center
     ) {
         // Draw Obstacle (Jelly / Chocolate) background or overlay

@@ -48,7 +48,7 @@ data class AdConfig(
     val rewardedAdUnitId: String = "ca-app-pub-6762270587599212/3464461610",
     val rewardedInterstitialAdUnitId: String = "ca-app-pub-6762270587599212/6788628953",
     val appOpenAdUnitId: String = "ca-app-pub-6762270587599212/6306624673",
-    val testModeEnabled: Boolean = true,
+    val testModeEnabled: Boolean = false,
     val bannerRefreshIntervalSec: Int = 20,
     val interstitialFrequencyLevels: Int = 2
 )

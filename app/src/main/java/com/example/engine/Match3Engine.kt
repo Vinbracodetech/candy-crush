@@ -135,6 +135,7 @@ class Match3Engine(
 
     suspend fun onTileClicked(r: Int, c: Int, onStateUpdate: (MatchEngineState) -> Unit) {
         if (isBusy || isGameOver || isGameWon) return
+        if (r < 0 || c < 0 || r >= config.rows || c >= config.cols) return
         if (r to c in emptyCells || board[r][c] == null) return
 
         // Handle Active Booster Click

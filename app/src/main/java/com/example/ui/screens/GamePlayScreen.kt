@@ -152,6 +152,13 @@ fun GamePlayScreen(
                                         obstacle = obstacle,
                                         isSelected = isSelected,
                                         onClick = { onTileClick(r, c) },
+                                        onSwipe = { dx, dy ->
+                                            if (kotlin.math.abs(dx) > kotlin.math.abs(dy)) {
+                                                if (dx > 0) onTileClick(r, c + 1) else onTileClick(r, c - 1)
+                                            } else {
+                                                if (dy > 0) onTileClick(r + 1, c) else onTileClick(r - 1, c)
+                                            }
+                                        },
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
