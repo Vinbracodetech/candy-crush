@@ -370,11 +370,18 @@ private fun GoalChip(goal: com.example.data.model.LevelGoal, modifier: Modifier 
                 GoalType.COLLECT_INGREDIENTS -> "🍒"
                 GoalType.COLLECT_COLOR -> "🍬"
             }
-            Text(icon, fontSize = 12.sp)
+            val actionText = when (goal.type) {
+                GoalType.SCORE -> "Score"
+                GoalType.CLEAR_JELLY -> "Clear Jelly"
+                GoalType.CLEAR_CHOCOLATE -> "Clear Choco"
+                GoalType.COLLECT_INGREDIENTS -> "Drop Cherries"
+                GoalType.COLLECT_COLOR -> "Collect ${goal.targetColor?.displayName ?: "Candy"}"
+            }
+            Text(icon, fontSize = 14.sp)
             Spacer(modifier = Modifier.width(4.dp))
             val remaining = maxOf(0, goal.targetAmount - goal.currentAmount)
             Text(
-                text = if (isDone) "DONE ✓" else "$remaining",
+                text = if (isDone) "DONE ✓" else "$actionText: $remaining",
                 color = if (isDone) NeonGreenAccent else Color.White,
                 fontWeight = FontWeight.Bold,
                 fontSize = 11.sp

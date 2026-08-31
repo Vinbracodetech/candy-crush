@@ -18,13 +18,16 @@ class GameRepository(
         val currentProfile = profileDao.getProfileSync()
         if (currentProfile == null) {
             profileDao.insertOrUpdate(PlayerProfile())
-            // Initialize 350 levels, with level 1 unlocked
-            val defaultLevels = (1..350).map { id ->
-                LevelProgress(
-                    levelId = id,
+        }
+        val existingLevels = levelDao.getAllProgress().firstOrNull() ?: emptyList()
+        if (existingLevels.size < 350) {
+            val defaultLevels = (1..350).map {
+                val existing = existingLevels.find { l -> l.levelId == it }
+                existing ?: LevelProgress(
+                    levelId = it,
                     stars = 0,
                     highScore = 0,
-                    isUnlocked = id == 1
+                    isUnlocked = it == 1 || existingLevels.any { l -> l.levelId == it - 1 && l.isUnlocked }
                 )
             }
             levelDao.insertAll(defaultLevels)

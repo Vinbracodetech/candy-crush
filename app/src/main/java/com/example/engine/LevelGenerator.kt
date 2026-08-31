@@ -42,14 +42,15 @@ object LevelGenerator {
         // Move calculation: much more generous to make game moderate instead of impossible
         val baseMoves = when {
             levelNumber <= 5 -> 35
-            levelNumber <= 15 -> 33
-            levelNumber <= 30 -> 31
-            levelNumber <= 60 -> 29
-            levelNumber <= 100 -> 28
-            levelNumber <= 200 -> 27
-            levelNumber <= 300 -> 26
-            else -> 25
-        } + (random.nextInt(4) - 1)
+            levelNumber <= 15 -> 30
+            levelNumber <= 30 -> 26
+            levelNumber <= 60 -> 24
+            levelNumber <= 100 -> 22
+            levelNumber <= 200 -> 20
+            levelNumber <= 300 -> 18
+            else -> 16
+        } + (random.nextInt(3) - 1)
+
 
         val colorCount = when {
             levelNumber <= 8 -> 4
@@ -74,15 +75,14 @@ object LevelGenerator {
                 // World 1: Sugar Valley (Introduction to mechanics)
                 if (levelNumber <= 5) {
                     // Simple score and color collection
-                    val targetColor = CandyColor.entries[levelNumber % CandyColor.entries.size]
-                    val colorTarget = 15 + levelNumber * 3
-                    goals.add(LevelGoal(GoalType.SCORE, target1))
+                    val targetColor = CandyColor.entries[levelNumber % colorCount]
+                    val colorTarget = 25 + levelNumber * 5
                     goals.add(LevelGoal(GoalType.COLLECT_COLOR, colorTarget, targetColor = targetColor))
                 } else if (levelNumber <= 10) {
-                    val color1 = CandyColor.entries[levelNumber % 6]
-                    val color2 = CandyColor.entries[(levelNumber + 2) % 6]
-                    goals.add(LevelGoal(GoalType.COLLECT_COLOR, 20 + levelNumber, targetColor = color1))
-                    goals.add(LevelGoal(GoalType.COLLECT_COLOR, 20 + levelNumber, targetColor = color2))
+                    val color1 = CandyColor.entries[levelNumber % colorCount]
+                    val color2 = CandyColor.entries[(levelNumber + 2) % colorCount]
+                    goals.add(LevelGoal(GoalType.COLLECT_COLOR, 30 + levelNumber * 2, targetColor = color1))
+                    goals.add(LevelGoal(GoalType.COLLECT_COLOR, 30 + levelNumber * 2, targetColor = color2))
                 } else {
                     // Introduce light single jelly
                     val jellyCount = 8 + (levelNumber - 10) * 2
@@ -97,7 +97,6 @@ object LevelGenerator {
                         obstacles[pos] = TileObstacle.JELLY_SINGLE
                     }
                     goals.add(LevelGoal(GoalType.CLEAR_JELLY, obstacles.size))
-                    goals.add(LevelGoal(GoalType.SCORE, target1))
                 }
             }
 
@@ -120,7 +119,6 @@ object LevelGenerator {
                 }
                 goals.add(LevelGoal(GoalType.CLEAR_JELLY, obstacles.size))
                 if (levelNumber % 2 == 0) {
-                    goals.add(LevelGoal(GoalType.SCORE, target1))
                 }
             }
 
@@ -133,16 +131,15 @@ object LevelGenerator {
                     obstacles[r to c] = TileObstacle.CHOCOLATE_BLOCK
                 }
                 goals.add(LevelGoal(GoalType.CLEAR_CHOCOLATE, chocoCount))
-                val targetColor = CandyColor.entries[(levelNumber * 3) % 6]
-                goals.add(LevelGoal(GoalType.COLLECT_COLOR, 25 + levelNumber / 2, targetColor = targetColor))
+                val targetColor = CandyColor.entries[(levelNumber * 3) % colorCount]
+                goals.add(LevelGoal(GoalType.COLLECT_COLOR, 40 + levelNumber, targetColor = targetColor))
             }
 
             4 -> {
                 // World 4: Berry Drops Bay (Ingredients)
                 ingredientCols = listOf(1, 3, 5, 6).shuffled(random).take(2)
-                maxIngredients = Math.min(5, 2 + (levelNumber - 60) / 10)
+                maxIngredients = Math.min(8, 2 + (levelNumber - 60) / 10)
                 goals.add(LevelGoal(GoalType.COLLECT_INGREDIENTS, maxIngredients))
-                goals.add(LevelGoal(GoalType.SCORE, target1))
                 // Add some blockers in between
                 obstacles[3 to 2] = TileObstacle.COOKIE_BLOCK
                 obstacles[3 to 5] = TileObstacle.COOKIE_BLOCK
@@ -173,7 +170,6 @@ object LevelGenerator {
                 if (jellyCount > 0) goals.add(LevelGoal(GoalType.CLEAR_JELLY, jellyCount))
                 val chocoCount = obstacles.count { it.value == TileObstacle.CHOCOLATE_BLOCK }
                 if (chocoCount > 0) goals.add(LevelGoal(GoalType.CLEAR_CHOCOLATE, chocoCount))
-                goals.add(LevelGoal(GoalType.SCORE, target1))
             }
 
             6 -> {
@@ -207,7 +203,6 @@ object LevelGenerator {
                 val chocoCount = obstacles.count { it.value == TileObstacle.CHOCOLATE_BLOCK }
                 if (jellyCount > 0) goals.add(LevelGoal(GoalType.CLEAR_JELLY, jellyCount))
                 if (chocoCount > 0) goals.add(LevelGoal(GoalType.CLEAR_CHOCOLATE, chocoCount))
-                goals.add(LevelGoal(GoalType.SCORE, target1))
             }
         }
 
