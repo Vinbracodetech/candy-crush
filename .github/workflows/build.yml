@@ -36,9 +36,19 @@ jobs:
       - name: Build Debug APK
         run: gradle assembleDebug --no-daemon --stacktrace
 
+      - name: Build Release AAB
+        run: gradle bundleRelease --no-daemon --stacktrace
+
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: app-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+
+      - name: Upload AAB Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: app-release-aab
+          path: app/build/outputs/bundle/release/*.aab
