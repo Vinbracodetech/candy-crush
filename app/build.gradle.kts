@@ -25,20 +25,10 @@ android {
 
   signingConfigs {
     create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      val file = file(keystorePath)
-      if (file.exists()) {
-        storeFile = file
-        storePassword = System.getenv("STORE_PASSWORD")
-        keyAlias = "upload"
-        keyPassword = System.getenv("KEY_PASSWORD")
-      } else {
-        // Fallback to debug keystore so AAB can still be built for testing/download
-        storeFile = file("${rootDir}/debug.keystore")
-        storePassword = "android"
-        keyAlias = "androiddebugkey"
-        keyPassword = "android"
-      }
+      storeFile = file("${rootDir}/release-key.jks")
+      storePassword = "android123"
+      keyAlias = "upload"
+      keyPassword = "android123"
     }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
