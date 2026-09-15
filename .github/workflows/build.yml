@@ -26,6 +26,12 @@ jobs:
         with:
           api-level: 34
           build-tools: 34.0.0
+          cache: true
+
+      - name: Install Android Tools
+        run: |
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --update
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "tools"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
