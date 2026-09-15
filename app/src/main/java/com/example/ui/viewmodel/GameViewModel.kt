@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 sealed class ScreenState {
+    object MainMenu : ScreenState()
     object LevelMap : ScreenState()
     data class Playing(val levelNumber: Int) : ScreenState()
 }
@@ -61,7 +62,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     val soundSynth = SoundSynth { playerProfile.value.soundEnabled }
 
     // Screen State
-    private val _currentScreen = MutableStateFlow<ScreenState>(ScreenState.LevelMap)
+    private val _currentScreen = MutableStateFlow<ScreenState>(ScreenState.MainMenu)
     val currentScreen: StateFlow<ScreenState> = _currentScreen.asStateFlow()
 
     // Match 3 Engine & State
@@ -277,6 +278,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         } else {
             startLevel(currentLvl)
         }
+    }
+
+    fun navigateToMap() {
+        _currentScreen.value = ScreenState.LevelMap
+    }
+
+    fun navigateToMainMenu() {
+        _currentScreen.value = ScreenState.MainMenu
     }
 
     fun exitToMap() {

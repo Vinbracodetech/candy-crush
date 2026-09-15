@@ -41,21 +41,22 @@ object LevelGenerator {
 
         // Move calculation: much more generous to make game moderate instead of impossible
         val baseMoves = when {
-            levelNumber <= 5 -> 35
-            levelNumber <= 15 -> 30
-            levelNumber <= 30 -> 26
-            levelNumber <= 60 -> 24
-            levelNumber <= 100 -> 22
-            levelNumber <= 200 -> 20
-            levelNumber <= 300 -> 18
-            else -> 16
+            levelNumber <= 5 -> 25
+            levelNumber <= 15 -> 20
+            levelNumber <= 30 -> 18
+            levelNumber <= 60 -> 16
+            levelNumber <= 100 -> 15
+            levelNumber <= 200 -> 14
+            levelNumber <= 300 -> 13
+            else -> 12
         } + (random.nextInt(3) - 1)
 
 
         val colorCount = when {
-            levelNumber <= 8 -> 4
-            levelNumber <= 40 -> 5
-            else -> if (levelNumber % 3 == 0) 6 else 5
+            levelNumber <= 5 -> 4
+            levelNumber <= 20 -> 5
+            levelNumber <= 50 -> 6
+            else -> if (levelNumber % 2 == 0) 6 else 5
         }
 
         val emptyTiles = mutableSetOf<Pair<Int, Int>>()

@@ -198,7 +198,7 @@ class Match3Engine(
         board[r1][c1] = tile2.copy(row = r1, col = c1)
         board[r2][c2] = tile1.copy(row = r2, col = c2)
         onStateUpdate(getState())
-        delay(60)
+        delay(30)
 
         if (isSpecialCombo) {
             movesLeft--
@@ -248,7 +248,7 @@ class Match3Engine(
                         board[r][c]?.let { clearTile(r, c) }
                     }
                 }
-                delay(100)
+                delay(30)
             }
 
             // Color Bomb + Striped -> Convert all same color candies to striped and explode
@@ -269,7 +269,7 @@ class Match3Engine(
                     }
                 }
                 onStateUpdate(getState())
-                delay(80)
+                delay(50)
                 for (r in 0 until rows) {
                     for (c in 0 until cols) {
                         if (board[r][c]?.color == targetColor) {
@@ -293,7 +293,7 @@ class Match3Engine(
                         }
                     }
                 }
-                delay(80)
+                delay(50)
             }
 
             // Striped + Striped -> Cross blast (Row and Column)
@@ -303,7 +303,7 @@ class Match3Engine(
                 showComboPopup("SUPER CROSS!", c2.toFloat(), r2.toFloat())
                 clearRow(r2)
                 clearCol(c2)
-                delay(80)
+                delay(50)
             }
 
             // Striped + Wrapped -> Giant 3-row + 3-col cross blast
@@ -317,7 +317,7 @@ class Match3Engine(
                 for (dc in -1..1) {
                     if (c2 + dc in 0 until cols) clearCol(c2 + dc)
                 }
-                delay(100)
+                delay(30)
             }
 
             // Wrapped + Wrapped -> 5x5 explosion
@@ -331,7 +331,7 @@ class Match3Engine(
                         }
                     }
                 }
-                delay(100)
+                delay(30)
             }
         }
     }
@@ -350,10 +350,10 @@ class Match3Engine(
         if (hasEmptySpaces) {
             applyGravity()
             onStateUpdate(getState())
-            delay(60)
+            delay(30)
             spawnNewCandies()
             onStateUpdate(getState())
-            delay(70)
+            delay(40)
             checkCollectedIngredients()
         }
         while (true) {
@@ -411,17 +411,17 @@ class Match3Engine(
             showComboPopup("+$pointsEarned", 4f, 4f)
 
             onStateUpdate(getState())
-            delay(70)
+            delay(40)
 
             // Apply gravity and drop
             applyGravity()
             onStateUpdate(getState())
-            delay(60)
+            delay(30)
 
             // Spawn new candies at top
             spawnNewCandies()
             onStateUpdate(getState())
-            delay(70)
+            delay(40)
 
             // Check collected ingredients at bottom
             checkCollectedIngredients()

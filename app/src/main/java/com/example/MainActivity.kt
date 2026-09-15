@@ -14,13 +14,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ads.RewardReason
-import com.example.ui.components.AdMonetizationDashboardDialog
 import com.example.ui.components.GlassBackground
 import com.example.ui.components.PermanentBannerAd
 import com.example.ui.screens.BoosterShopDialog
 import com.example.ui.screens.DailyLuckyWheelDialog
 import com.example.ui.screens.GamePlayScreen
 import com.example.ui.screens.LevelMapScreen
+import com.example.ui.screens.MainMenuScreen
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.GameViewModel
 import com.example.ui.viewmodel.ScreenState
@@ -53,15 +53,9 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
     val currentScreen by viewModel.currentScreen.collectAsStateWithLifecycle()
     val profile by viewModel.playerProfile.collectAsStateWithLifecycle()
     val levelProgressList by viewModel.levelProgressList.collectAsStateWithLifecycle()
-    val currentBannerAd by viewModel.adManager.currentBannerAd.collectAsStateWithLifecycle()
-    val activeAdState by viewModel.adManager.activeAd.collectAsStateWithLifecycle()
-    val adStats by viewModel.adManager.adStats.collectAsStateWithLifecycle()
     val adConfig by viewModel.adManager.config.collectAsStateWithLifecycle()
-
     val showShop by viewModel.showShopDialog.collectAsStateWithLifecycle()
     val showSpin by viewModel.showDailySpinDialog.collectAsStateWithLifecycle()
-    val showStats by viewModel.showMonetizationDialog.collectAsStateWithLifecycle()
-
     val currentConfig by viewModel.currentLevelConfig.collectAsStateWithLifecycle()
     val engineState by viewModel.engineState.collectAsStateWithLifecycle()
 
@@ -70,6 +64,13 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
             // Main Screen Routing
             Crossfade(targetState = currentScreen, label = "screenTransition") { screen ->
                 when (screen) {
+                    is ScreenState.MainMenu -> {
+                        MainMenuScreen(
+                            profile = profile,
+                            onPlayClick = { viewModel.navigateToMap() },
+                            onToggleSound = { viewModel.toggleSound() }
+                        )
+                    }
                     is ScreenState.LevelMap -> {
                         LevelMapScreen(
                             profile = profile,
@@ -79,12 +80,11 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
                             },
                             onOpenShop = { viewModel.showShopDialog.value = true },
                             onOpenDailySpin = { viewModel.showDailySpinDialog.value = true },
-                            onOpenMonetizationStats = { viewModel.showMonetizationDialog.value = true },
+                            onOpenMonetizationStats = { /* Removed */ },
                             onWatchAdForLives = { viewModel.watchAdForLives() },
                             onToggleSound = { viewModel.toggleSound() }
                         )
                     }
-
                     is ScreenState.Playing -> {
                         val config = currentConfig
                         val state = engineState
@@ -113,10 +113,6 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
             )
         }
 
-        // Active ad state is now managed completely by native Google AdMob SDK.
-        // Fullscreen active ad modals are no longer simulated in Compose.
-
-        // Booster Shop & Lives Dialog
         if (showShop) {
             BoosterShopDialog(
                 profile = profile,
@@ -126,7 +122,6 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
             )
         }
 
-        // Daily Lucky Wheel Dialog
         if (showSpin) {
             DailyLuckyWheelDialog(
                 onRewardWon = { rewardText, coins, hammer, swap, bomb ->
@@ -136,15 +131,6 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
                     viewModel.watchAdForReward(RewardReason.DAILY_BONUS_SPIN)
                 },
                 onDismiss = { viewModel.showDailySpinDialog.value = false }
-            )
-        }
-
-        // Ad Monetization & Stats Panel Dialog
-        if (showStats) {
-            AdMonetizationDashboardDialog(
-                stats = adStats,
-                config = adConfig,
-                onDismiss = { viewModel.showMonetizationDialog.value = false }
             )
         }
     }

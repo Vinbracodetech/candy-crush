@@ -1,4 +1,6 @@
+
 package com.example.ads
+import com.example.BuildConfig
 
 enum class AdType {
     BANNER,
@@ -42,12 +44,14 @@ data class AdMonetizationStats(
     val fillRate: Float = 99.8f
 )
 
+
+
 data class AdConfig(
-    val bannerAdUnitId: String = "ca-app-pub-3940256099942544/6300978111",
-    val interstitialAdUnitId: String = "ca-app-pub-3940256099942544/1033173712",
-    val rewardedAdUnitId: String = "ca-app-pub-3940256099942544/5224354917",
-    val rewardedInterstitialAdUnitId: String = "ca-app-pub-3940256099942544/5354046379",
-    val appOpenAdUnitId: String = "ca-app-pub-3940256099942544/9257395921",
+    val bannerAdUnitId: String = BuildConfig.BANNER_AD_UNIT_ID,
+    val interstitialAdUnitId: String = BuildConfig.INTERSTITIAL_AD_UNIT_ID,
+    val rewardedAdUnitId: String = BuildConfig.REWARDED_AD_UNIT_ID,
+    val rewardedInterstitialAdUnitId: String = BuildConfig.REWARDED_INTERSTITIAL_AD_UNIT_ID,
+    val appOpenAdUnitId: String = BuildConfig.APP_OPEN_AD_UNIT_ID,
     val testModeEnabled: Boolean = false,
     val bannerRefreshIntervalSec: Int = 20,
     val interstitialFrequencyLevels: Int = 2
