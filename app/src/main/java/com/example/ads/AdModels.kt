@@ -47,11 +47,11 @@ data class AdMonetizationStats(
 
 
 data class AdConfig(
-    val bannerAdUnitId: String = BuildConfig.BANNER_AD_UNIT_ID,
-    val interstitialAdUnitId: String = BuildConfig.INTERSTITIAL_AD_UNIT_ID,
-    val rewardedAdUnitId: String = BuildConfig.REWARDED_AD_UNIT_ID,
-    val rewardedInterstitialAdUnitId: String = BuildConfig.REWARDED_INTERSTITIAL_AD_UNIT_ID,
-    val appOpenAdUnitId: String = BuildConfig.APP_OPEN_AD_UNIT_ID,
+    val bannerAdUnitId: String = BuildConfig.BANNER_AD_UNIT_ID.ifEmpty { "ca-app-pub-6762270587599212/2583002088" },
+    val interstitialAdUnitId: String = BuildConfig.INTERSTITIAL_AD_UNIT_ID.ifEmpty { "ca-app-pub-6762270587599212/9667285182" },
+    val rewardedAdUnitId: String = BuildConfig.REWARDED_AD_UNIT_ID.ifEmpty { "ca-app-pub-6762270587599212/3464461610" },
+    val rewardedInterstitialAdUnitId: String = BuildConfig.REWARDED_INTERSTITIAL_AD_UNIT_ID.ifEmpty { "ca-app-pub-6762270587599212/6788628953" },
+    val appOpenAdUnitId: String = BuildConfig.APP_OPEN_AD_UNIT_ID.ifEmpty { "ca-app-pub-6762270587599212/6306624673" },
     val testModeEnabled: Boolean = false,
     val bannerRefreshIntervalSec: Int = 20,
     val interstitialFrequencyLevels: Int = 2

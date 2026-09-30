@@ -7,7 +7,14 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -114,12 +121,52 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
         }
 
         if (showShop) {
+            val remainingCooldown = viewModel.adManager.getRemainingRewardedCooldownSeconds()
             BoosterShopDialog(
                 profile = profile,
+                cooldownSeconds = remainingCooldown,
                 onBuyBooster = { type, cost -> viewModel.buyBoosterWithCoins(type, cost) },
                 onWatchAdForReward = { reason -> viewModel.watchAdForReward(reason) },
                 onDismiss = { viewModel.showShopDialog.value = false }
             )
+        }
+
+        val userMsg by viewModel.userMessage.collectAsStateWithLifecycle()
+        if (userMsg != null) {
+            androidx.compose.ui.window.Dialog(onDismissRequest = { viewModel.dismissUserMessage() }) {
+                com.example.ui.components.GlassCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    backgroundColor = androidx.compose.ui.graphics.Color(0xEE1E0B38),
+                    borderColor = com.example.ui.theme.NeonGoldTertiary
+                ) {
+                    androidx.compose.foundation.layout.Column(
+                        modifier = Modifier.padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        androidx.compose.material3.Text(
+                            text = userMsg ?: "",
+                            color = androidx.compose.ui.graphics.Color.White,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            fontSize = 15.sp,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(16.dp))
+                        com.example.ui.components.GlassButton(
+                            onClick = { viewModel.dismissUserMessage() },
+                            brush = com.example.ui.theme.ButtonCyanGlassBrush,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            androidx.compose.material3.Text(
+                                "OK",
+                                color = androidx.compose.ui.graphics.Color.White,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Black
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         if (showSpin) {

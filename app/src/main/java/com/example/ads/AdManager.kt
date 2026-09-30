@@ -37,9 +37,28 @@ class AdManager {
 
     private var interstitialAd: InterstitialAd? = null
     private var rewardedAd: RewardedAd? = null
+    private var rewardedInterstitialAd: RewardedInterstitialAd? = null
     private var appOpenAd: AppOpenAd? = null
 
     private var levelsSinceLastInterstitial = 0
+
+    // Cooldown in milliseconds for rewarded ads (20 minutes = 1,200,000 ms)
+    val rewardedCooldownMs: Long = 20 * 60 * 1000L
+    private val _lastRewardedAdTime = MutableStateFlow(0L)
+    val lastRewardedAdTime: StateFlow<Long> = _lastRewardedAdTime.asStateFlow()
+
+    fun getRemainingRewardedCooldownSeconds(): Long {
+        val elapsed = System.currentTimeMillis() - _lastRewardedAdTime.value
+        return if (elapsed < rewardedCooldownMs) {
+            (rewardedCooldownMs - elapsed) / 1000L
+        } else {
+            0L
+        }
+    }
+
+    fun isRewardedAdReady(): Boolean {
+        return getRemainingRewardedCooldownSeconds() == 0L
+    }
 
     fun init(context: Context) {
         if (isInitialized) return
@@ -47,6 +66,7 @@ class AdManager {
             isInitialized = true
             loadInterstitial(context)
             loadRewarded(context)
+            loadRewardedInterstitial(context)
             loadAppOpenAd(context)
         }
     }
@@ -71,6 +91,18 @@ class AdManager {
             }
             override fun onAdFailedToLoad(error: LoadAdError) {
                 rewardedAd = null
+            }
+        })
+    }
+
+    private fun loadRewardedInterstitial(context: Context) {
+        val adRequest = AdRequest.Builder().build()
+        RewardedInterstitialAd.load(context, _config.value.rewardedInterstitialAdUnitId, adRequest, object : RewardedInterstitialAdLoadCallback() {
+            override fun onAdLoaded(ad: RewardedInterstitialAd) {
+                rewardedInterstitialAd = ad
+            }
+            override fun onAdFailedToLoad(error: LoadAdError) {
+                rewardedInterstitialAd = null
             }
         })
     }
@@ -139,7 +171,19 @@ class AdManager {
         }
     }
 
-    fun showRewardedAd(reason: RewardReason, onRewardGranted: (RewardReason) -> Unit, onDismiss: () -> Unit = {}) {
+    fun showRewardedAd(
+        reason: RewardReason,
+        onRewardGranted: (RewardReason) -> Unit,
+        onCooldownActive: ((remainingSeconds: Long) -> Unit)? = null,
+        onDismiss: () -> Unit = {}
+    ) {
+        val remaining = getRemainingRewardedCooldownSeconds()
+        if (remaining > 0) {
+            onCooldownActive?.invoke(remaining)
+            onDismiss()
+            return
+        }
+
         val activity = currentActivity
         if (activity != null && rewardedAd != null) {
             rewardedAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
@@ -150,20 +194,78 @@ class AdManager {
                 }
                 override fun onAdFailedToShowFullScreenContent(error: AdError) {
                     rewardedAd = null
+                    loadRewarded(activity)
                     onDismiss()
                 }
             }
             rewardedAd?.show(activity) { rewardItem ->
+                _lastRewardedAdTime.value = System.currentTimeMillis()
+                onRewardGranted(reason)
+            }
+            _adStats.update { it.copy(rewardedImpressions = it.rewardedImpressions + 1) }
+        } else if (activity != null && rewardedInterstitialAd != null) {
+            // Fallback to Rewarded Interstitial if Rewarded ad is not cached yet
+            rewardedInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    rewardedInterstitialAd = null
+                    loadRewardedInterstitial(activity)
+                    onDismiss()
+                }
+                override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                    rewardedInterstitialAd = null
+                    loadRewardedInterstitial(activity)
+                    onDismiss()
+                }
+            }
+            rewardedInterstitialAd?.show(activity) { rewardItem ->
+                _lastRewardedAdTime.value = System.currentTimeMillis()
                 onRewardGranted(reason)
             }
             _adStats.update { it.copy(rewardedImpressions = it.rewardedImpressions + 1) }
         } else {
+            activity?.let {
+                loadRewarded(it)
+                loadRewardedInterstitial(it)
+            }
             onDismiss()
         }
     }
 
-    fun showRewardedInterstitial(reason: RewardReason, onRewardGranted: (RewardReason) -> Unit, onDismiss: () -> Unit = {}) {
-        showRewardedAd(reason, onRewardGranted, onDismiss)
+    fun showRewardedInterstitial(
+        reason: RewardReason,
+        onRewardGranted: (RewardReason) -> Unit,
+        onCooldownActive: ((remainingSeconds: Long) -> Unit)? = null,
+        onDismiss: () -> Unit = {}
+    ) {
+        val remaining = getRemainingRewardedCooldownSeconds()
+        if (remaining > 0) {
+            onCooldownActive?.invoke(remaining)
+            onDismiss()
+            return
+        }
+
+        val activity = currentActivity
+        if (activity != null && rewardedInterstitialAd != null) {
+            rewardedInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    rewardedInterstitialAd = null
+                    loadRewardedInterstitial(activity)
+                    onDismiss()
+                }
+                override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                    rewardedInterstitialAd = null
+                    loadRewardedInterstitial(activity)
+                    onDismiss()
+                }
+            }
+            rewardedInterstitialAd?.show(activity) { rewardItem ->
+                _lastRewardedAdTime.value = System.currentTimeMillis()
+                onRewardGranted(reason)
+            }
+            _adStats.update { it.copy(rewardedImpressions = it.rewardedImpressions + 1) }
+        } else {
+            showRewardedAd(reason, onRewardGranted, onCooldownActive, onDismiss)
+        }
     }
 
     fun closeActiveAd() {

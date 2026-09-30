@@ -78,6 +78,20 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     var showDailySpinDialog = MutableStateFlow(false)
     var showMonetizationDialog = MutableStateFlow(false)
 
+    // User notice toast / popup state
+    private val _userMessage = MutableStateFlow<String?>(null)
+    val userMessage: StateFlow<String?> = _userMessage.asStateFlow()
+
+    fun dismissUserMessage() {
+        _userMessage.value = null
+    }
+
+    private fun notifyCooldown(remainingSeconds: Long) {
+        val minutes = remainingSeconds / 60
+        val seconds = remainingSeconds % 60
+        _userMessage.value = "⏳ Next bonus video ready in ${minutes}m ${seconds}s!"
+    }
+
     init {
         viewModelScope.launch {
             repository.initializeIfEmpty()
@@ -201,6 +215,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             onRewardGranted = {
                 engine?.addExtraMoves(5)
                 _engineState.value = engine?.getState()
+            },
+            onCooldownActive = { remaining ->
+                notifyCooldown(remaining)
             }
         )
     }
@@ -212,6 +229,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 viewModelScope.launch {
                     repository.restoreLives(5)
                 }
+            },
+            onCooldownActive = { remaining ->
+                notifyCooldown(remaining)
             }
         )
     }
@@ -231,6 +251,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     _engineState.value = engine?.getState()
                 }
+            },
+            onCooldownActive = { remaining ->
+                notifyCooldown(remaining)
             }
         )
     }

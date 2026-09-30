@@ -39,16 +39,16 @@ object LevelGenerator {
         val rows = 8
         val cols = 8
 
-        // Move calculation: much more generous to make game moderate instead of impossible
+        // Move calculation: moderate, fair, and engaging so players have enough breathing room
         val baseMoves = when {
-            levelNumber <= 5 -> 25
-            levelNumber <= 15 -> 20
-            levelNumber <= 30 -> 18
-            levelNumber <= 60 -> 16
-            levelNumber <= 100 -> 15
-            levelNumber <= 200 -> 14
-            levelNumber <= 300 -> 13
-            else -> 12
+            levelNumber <= 5 -> 32
+            levelNumber <= 15 -> 28
+            levelNumber <= 30 -> 26
+            levelNumber <= 60 -> 24
+            levelNumber <= 100 -> 22
+            levelNumber <= 200 -> 20
+            levelNumber <= 300 -> 19
+            else -> 18
         } + (random.nextInt(3) - 1)
 
 

@@ -64,10 +64,17 @@ import kotlin.random.Random
 @Composable
 fun BoosterShopDialog(
     profile: PlayerProfile,
+    cooldownSeconds: Long = 0L,
     onBuyBooster: (type: String, cost: Int) -> Unit,
     onWatchAdForReward: (RewardReason) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val isCooldown = cooldownSeconds > 0L
+    val cooldownText = if (isCooldown) {
+        val m = cooldownSeconds / 60
+        val s = cooldownSeconds % 60
+        "${m}m ${s}s"
+    } else ""
     Dialog(onDismissRequest = onDismiss) {
         GlassCard(
             modifier = Modifier
@@ -146,12 +153,13 @@ fun BoosterShopDialog(
                                 onDismiss()
                                 onWatchAdForReward(RewardReason.EXTRA_LIVES)
                             },
-                            brush = ButtonPinkGlassBrush,
+                            enabled = !isCooldown,
+                            brush = if (!isCooldown) ButtonPinkGlassBrush else androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color(0x33FFFFFF), Color(0x22FFFFFF))),
                             padding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                         ) {
                             Icon(Icons.Default.Videocam, "Ad", tint = Color.White, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("FREE", color = Color.White, fontWeight = FontWeight.Black, fontSize = 12.sp)
+                            Text(if (isCooldown) cooldownText else "FREE", color = Color.White, fontWeight = FontWeight.Black, fontSize = 12.sp)
                         }
                     }
                 }
@@ -165,6 +173,8 @@ fun BoosterShopDialog(
                     ownedCount = profile.hammerBoosters,
                     coinCost = 80,
                     canAfford = profile.coins >= 80,
+                    isCooldown = isCooldown,
+                    cooldownText = cooldownText,
                     onBuy = { onBuyBooster("hammer", 80) },
                     onWatchAd = {
                         onDismiss()
@@ -181,6 +191,8 @@ fun BoosterShopDialog(
                     ownedCount = profile.swapBoosters,
                     coinCost = 100,
                     canAfford = profile.coins >= 100,
+                    isCooldown = isCooldown,
+                    cooldownText = cooldownText,
                     onBuy = { onBuyBooster("swap", 100) },
                     onWatchAd = {
                         onDismiss()
@@ -197,6 +209,8 @@ fun BoosterShopDialog(
                     ownedCount = profile.colorBombBoosters,
                     coinCost = 120,
                     canAfford = profile.coins >= 120,
+                    isCooldown = isCooldown,
+                    cooldownText = cooldownText,
                     onBuy = { onBuyBooster("bomb", 120) },
                     onWatchAd = {
                         onDismiss()
@@ -215,6 +229,8 @@ private fun ShopItemRow(
     ownedCount: Int,
     coinCost: Int,
     canAfford: Boolean,
+    isCooldown: Boolean = false,
+    cooldownText: String = "",
     onBuy: () -> Unit,
     onWatchAd: () -> Unit
 ) {
@@ -243,12 +259,13 @@ private fun ShopItemRow(
                 // Free Ad Button
                 GlassButton(
                     onClick = onWatchAd,
-                    brush = ButtonCyanGlassBrush,
+                    enabled = !isCooldown,
+                    brush = if (!isCooldown) ButtonCyanGlassBrush else androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color(0x33FFFFFF), Color(0x22FFFFFF))),
                     padding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                 ) {
                     Icon(Icons.Default.Videocam, "Ad", tint = Color.White, modifier = Modifier.size(14.dp))
                     Spacer(modifier = Modifier.width(2.dp))
-                    Text("Free", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text(if (isCooldown) cooldownText else "Free", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.width(6.dp))
