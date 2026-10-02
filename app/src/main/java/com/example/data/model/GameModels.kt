@@ -2,13 +2,19 @@ package com.example.data.model
 
 import androidx.compose.ui.graphics.Color
 
-enum class CandyColor(val displayName: String, val baseColor: Color, val glowColor: Color, val accentColor: Color) {
-    RED("Strawberry", Color(0xFFFF2E63), Color(0xFFFF7597), Color(0xFFFFD1DC)),
-    ORANGE("Tangerine", Color(0xFFFF7A00), Color(0xFFFFA94D), Color(0xFFFFE8CC)),
-    YELLOW("Lemon", Color(0xFFFFD600), Color(0xFFFFF066), Color(0xFFFFFFB3)),
-    GREEN("Lime", Color(0xFF00E676), Color(0xFF69F0AE), Color(0xFFB9F6CA)),
-    BLUE("Berry", Color(0xFF00B0FF), Color(0xFF80D8FF), Color(0xFFE1F5FE)),
-    PURPLE("Grape", Color(0xFFD500F9), Color(0xFFEA80FC), Color(0xFFF3E5F5));
+enum class CandyColor(
+    val displayName: String,
+    val fruitEmoji: String,
+    val baseColor: Color,
+    val glowColor: Color,
+    val accentColor: Color
+) {
+    RED("Strawberry", "🍓", Color(0xFFFF2E63), Color(0xFFFF7597), Color(0xFFFFD1DC)),
+    ORANGE("Tangerine", "🍊", Color(0xFFFF7A00), Color(0xFFFFA94D), Color(0xFFFFE8CC)),
+    YELLOW("Lemon", "🍋", Color(0xFFFFD600), Color(0xFFFFF066), Color(0xFFFFFFB3)),
+    GREEN("Lime", "🍏", Color(0xFF00E676), Color(0xFF69F0AE), Color(0xFFB9F6CA)),
+    BLUE("Berry", "🫐", Color(0xFF00B0FF), Color(0xFF80D8FF), Color(0xFFE1F5FE)),
+    PURPLE("Grape", "🍇", Color(0xFFD500F9), Color(0xFFEA80FC), Color(0xFFF3E5F5));
 
     companion object {
         fun random(count: Int = 6): CandyColor {

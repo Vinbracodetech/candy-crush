@@ -39,24 +39,26 @@ object LevelGenerator {
         val rows = 8
         val cols = 8
 
-        // Move calculation: moderate, fair, and engaging so players have enough breathing room
+        // Move calculation: strictly decrease moves as level increases for tight, strategic, challenging puzzle gameplay
         val baseMoves = when {
-            levelNumber <= 5 -> 32
-            levelNumber <= 15 -> 28
-            levelNumber <= 30 -> 26
-            levelNumber <= 60 -> 24
-            levelNumber <= 100 -> 22
-            levelNumber <= 200 -> 20
-            levelNumber <= 300 -> 19
-            else -> 18
-        } + (random.nextInt(3) - 1)
+            levelNumber <= 3 -> 24
+            levelNumber <= 7 -> 22
+            levelNumber <= 10 -> 20
+            levelNumber <= 15 -> 18
+            levelNumber <= 25 -> 17
+            levelNumber <= 40 -> 16
+            levelNumber <= 60 -> 15
+            levelNumber <= 100 -> 14
+            levelNumber <= 180 -> 13
+            levelNumber <= 260 -> 12
+            else -> 11
+        }
 
-
+        // Color distribution: higher color counts make matches significantly more challenging
         val colorCount = when {
-            levelNumber <= 5 -> 4
-            levelNumber <= 20 -> 5
-            levelNumber <= 50 -> 6
-            else -> if (levelNumber % 2 == 0) 6 else 5
+            levelNumber <= 3 -> 4
+            levelNumber <= 9 -> 5
+            else -> 6
         }
 
         val emptyTiles = mutableSetOf<Pair<Int, Int>>()
@@ -66,61 +68,86 @@ object LevelGenerator {
         var maxIngredients = 0
 
         // Star target score scaling
-        val baseTarget = 1500 + levelNumber * 450 + (levelNumber * levelNumber * 15)
-        val target1 = (baseTarget * 0.7).toInt()
-        val target2 = (baseTarget * 1.3).toInt()
-        val target3 = (baseTarget * 2.0).toInt()
+        val baseTarget = 2000 + levelNumber * 650 + (levelNumber * levelNumber * 25)
+        val target1 = (baseTarget * 0.8).toInt()
+        val target2 = (baseTarget * 1.5).toInt()
+        val target3 = (baseTarget * 2.4).toInt()
 
         when (worldIndex) {
             1 -> {
-                // World 1: Sugar Valley (Introduction to mechanics)
-                if (levelNumber <= 5) {
-                    // Simple score and color collection
+                // World 1: Sugar Valley (Ramps up quickly into real puzzle difficulty)
+                if (levelNumber <= 3) {
+                    // Introduction
                     val targetColor = CandyColor.entries[levelNumber % colorCount]
                     val colorTarget = 25 + levelNumber * 5
                     goals.add(LevelGoal(GoalType.COLLECT_COLOR, colorTarget, targetColor = targetColor))
-                } else if (levelNumber <= 10) {
+                } else if (levelNumber <= 9) {
                     val color1 = CandyColor.entries[levelNumber % colorCount]
                     val color2 = CandyColor.entries[(levelNumber + 2) % colorCount]
-                    goals.add(LevelGoal(GoalType.COLLECT_COLOR, 30 + levelNumber * 2, targetColor = color1))
-                    goals.add(LevelGoal(GoalType.COLLECT_COLOR, 30 + levelNumber * 2, targetColor = color2))
+                    goals.add(LevelGoal(GoalType.COLLECT_COLOR, 32 + levelNumber * 3, targetColor = color1))
+                    goals.add(LevelGoal(GoalType.COLLECT_COLOR, 32 + levelNumber * 3, targetColor = color2))
                 } else {
-                    // Introduce light single jelly
-                    val jellyCount = 8 + (levelNumber - 10) * 2
-                    val chosenPositions = mutableListOf<Pair<Int, Int>>()
-                    for (r in 2..5) {
-                        for (c in 2..5) {
-                            chosenPositions.add(r to c)
+                    // Level 10+: Tough multi-layered Frosting & challenging board obstacles
+                    // Levels 10-15: Thick Double Frosting covering wide center & edges
+                    for (r in 1..6) {
+                        for (c in 1..6) {
+                            if (levelNumber >= 13) {
+                                // Double thick Frosting everywhere in the active region
+                                obstacles[r to c] = TileObstacle.JELLY_DOUBLE
+                            } else {
+                                // Heavy mix of Double Frosting in the center + Single Frosting around
+                                val isDoubleLayer = (r in 2..5 && c in 2..5)
+                                obstacles[r to c] = if (isDoubleLayer) TileObstacle.JELLY_DOUBLE else TileObstacle.JELLY_SINGLE
+                            }
                         }
                     }
-                    chosenPositions.shuffle(random)
-                    chosenPositions.take(jellyCount).forEach { pos ->
-                        obstacles[pos] = TileObstacle.JELLY_SINGLE
+
+                    // Add tough Chocolate Blocks on corners from level 12+
+                    if (levelNumber >= 12) {
+                        obstacles[1 to 1] = TileObstacle.CHOCOLATE_BLOCK
+                        obstacles[1 to 6] = TileObstacle.CHOCOLATE_BLOCK
+                        obstacles[6 to 1] = TileObstacle.CHOCOLATE_BLOCK
+                        obstacles[6 to 6] = TileObstacle.CHOCOLATE_BLOCK
                     }
-                    goals.add(LevelGoal(GoalType.CLEAR_JELLY, obstacles.size))
+
+                    val jellyGoalCount = obstacles.count { it.value == TileObstacle.JELLY_DOUBLE || it.value == TileObstacle.JELLY_SINGLE }
+                    goals.add(LevelGoal(GoalType.CLEAR_JELLY, jellyGoalCount))
+
+                    val chocoCount = obstacles.count { it.value == TileObstacle.CHOCOLATE_BLOCK }
+                    if (chocoCount > 0) {
+                        goals.add(LevelGoal(GoalType.CLEAR_CHOCOLATE, chocoCount))
+                    }
+
+                    // Dual Goal: Also require collecting a designated fruit/candy
+                    val targetFruit = CandyColor.entries[(levelNumber * 2) % colorCount]
+                    goals.add(LevelGoal(GoalType.COLLECT_COLOR, 35 + (levelNumber - 10) * 4, targetColor = targetFruit))
                 }
             }
 
             2 -> {
-                // World 2: Frosting Glade (Jelly focused with double layers)
-                val isDouble = levelNumber > 30
-                for (r in 1..6) {
-                    for (c in 1..6) {
-                        if ((r + c + levelNumber) % 2 == 0 || (r in 2..5 && c in 2..5)) {
-                            obstacles[r to c] = if (isDouble && (r in 2..5 && c in 2..5)) TileObstacle.JELLY_DOUBLE else TileObstacle.JELLY_SINGLE
+                // World 2: Frosting Glade (Dense Double Frosting grids with Cutouts)
+                for (r in 0..7) {
+                    for (c in 0..7) {
+                        if ((r in 1..6 && c in 1..6)) {
+                            // High concentration of double-layer Frosting
+                            val isDouble = (r in 2..5 && c in 2..5) || levelNumber > 60
+                            obstacles[r to c] = if (isDouble) TileObstacle.JELLY_DOUBLE else TileObstacle.JELLY_SINGLE
                         }
                     }
                 }
                 // Custom cutouts for board shapes
-                if (levelNumber % 4 == 0) {
+                if (levelNumber % 2 == 0) {
                     emptyTiles.add(0 to 0)
                     emptyTiles.add(0 to 7)
                     emptyTiles.add(7 to 0)
                     emptyTiles.add(7 to 7)
                 }
-                goals.add(LevelGoal(GoalType.CLEAR_JELLY, obstacles.size))
-                if (levelNumber % 2 == 0) {
-                }
+                val jellyCount = obstacles.count { it.value == TileObstacle.JELLY_DOUBLE || it.value == TileObstacle.JELLY_SINGLE }
+                goals.add(LevelGoal(GoalType.CLEAR_JELLY, jellyCount))
+
+                // Secondary Goal
+                val targetColor = CandyColor.entries[(levelNumber * 3) % colorCount]
+                goals.add(LevelGoal(GoalType.COLLECT_COLOR, 40 + levelNumber, targetColor = targetColor))
             }
 
             3 -> {

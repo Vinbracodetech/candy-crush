@@ -342,12 +342,12 @@ private fun DrawScope.drawCandyGem(color: CandyColor, special: SpecialType, spin
         }
 
         CandyColor.ORANGE -> {
-            // Rounded Hexagon
+            // Tangerine Citrus Wheel
             val path = Path().apply {
                 for (i in 0 until 6) {
                     val angle = Math.toRadians((i * 60 - 30).toDouble())
-                    val px = cx + (radius * 0.88f * Math.cos(angle)).toFloat()
-                    val py = cy + (radius * 0.88f * Math.sin(angle)).toFloat()
+                    val px = cx + (radius * 0.92f * Math.cos(angle)).toFloat()
+                    val py = cy + (radius * 0.92f * Math.sin(angle)).toFloat()
                     if (i == 0) moveTo(px, py) else lineTo(px, py)
                 }
                 close()
@@ -355,35 +355,74 @@ private fun DrawScope.drawCandyGem(color: CandyColor, special: SpecialType, spin
             drawPath(
                 path,
                 brush = Brush.radialGradient(
-                    colors = listOf(color.accentColor, color.baseColor, Color(0xFFB34700)),
-                    center = Offset(cx - radius * 0.3f, cy - radius * 0.3f),
-                    radius = radius * 1.1f
+                    colors = listOf(color.accentColor, color.baseColor, Color(0xFFCC5500)),
+                    center = Offset(cx - radius * 0.25f, cy - radius * 0.25f),
+                    radius = radius * 1.15f
                 )
             )
-            drawPath(path, color = Color.White.copy(alpha = 0.5f), style = Stroke(width = 2f))
+            drawPath(path, color = Color.White.copy(alpha = 0.6f), style = Stroke(width = 2.5f))
+
+            // Inner citrus slice segments for Tangerine
+            for (i in 0 until 6) {
+                val segAngle = Math.toRadians((i * 60).toDouble())
+                val innerX = cx + (radius * 0.55f * Math.cos(segAngle)).toFloat()
+                val innerY = cy + (radius * 0.55f * Math.sin(segAngle)).toFloat()
+                drawLine(
+                    color = Color.White.copy(alpha = 0.45f),
+                    start = Offset(cx, cy),
+                    end = Offset(innerX, innerY),
+                    strokeWidth = 2f
+                )
+                drawCircle(
+                    color = Color(0xFFFFE57F).copy(alpha = 0.7f),
+                    radius = radius * 0.14f,
+                    center = Offset(innerX * 0.65f + cx * 0.35f, innerY * 0.65f + cy * 0.35f)
+                )
+            }
+            // Specular gloss dot
+            drawCircle(
+                color = Color.White.copy(alpha = 0.85f),
+                radius = radius * 0.22f,
+                center = Offset(cx - radius * 0.35f, cy - radius * 0.35f)
+            )
         }
 
         CandyColor.YELLOW -> {
-            // Sparkling Star Gem
+            // Lemon Drop Citrus Gem
             val path = Path().apply {
-                for (i in 0 until 8) {
-                    val r = if (i % 2 == 0) radius * 0.92f else radius * 0.52f
-                    val angle = Math.toRadians((i * 45).toDouble())
-                    val px = cx + (r * Math.cos(angle)).toFloat()
-                    val py = cy + (r * Math.sin(angle)).toFloat()
-                    if (i == 0) moveTo(px, py) else lineTo(px, py)
-                }
+                // Pointed oval lemon slice shape
+                moveTo(cx, cy - radius * 0.95f)
+                cubicTo(cx + radius * 0.88f, cy - radius * 0.6f, cx + radius * 0.88f, cy + radius * 0.6f, cx, cy + radius * 0.95f)
+                cubicTo(cx - radius * 0.88f, cy + radius * 0.6f, cx - radius * 0.88f, cy - radius * 0.6f, cx, cy - radius * 0.95f)
                 close()
             }
             drawPath(
                 path,
                 brush = Brush.radialGradient(
-                    colors = listOf(Color.White, color.baseColor, Color(0xFFB28900)),
-                    center = Offset(cx - radius * 0.2f, cy - radius * 0.2f),
-                    radius = radius * 1.1f
+                    colors = listOf(Color(0xFFFFFFE0), color.baseColor, Color(0xFFC79100)),
+                    center = Offset(cx - radius * 0.25f, cy - radius * 0.25f),
+                    radius = radius * 1.15f
                 )
             )
-            drawPath(path, color = Color.White.copy(alpha = 0.6f), style = Stroke(width = 2f))
+            drawPath(path, color = Color.White.copy(alpha = 0.7f), style = Stroke(width = 2.5f))
+
+            // Inner lemon citrus wedges
+            for (i in 0 until 4) {
+                val ang = Math.toRadians((i * 90 + 45).toDouble())
+                val dotX = cx + (radius * 0.38f * Math.cos(ang)).toFloat()
+                val dotY = cy + (radius * 0.38f * Math.sin(ang)).toFloat()
+                drawCircle(
+                    color = Color.White.copy(alpha = 0.5f),
+                    radius = radius * 0.12f,
+                    center = Offset(dotX, dotY)
+                )
+            }
+            // Crisp White Highlight
+            drawCircle(
+                color = Color.White.copy(alpha = 0.9f),
+                radius = radius * 0.24f,
+                center = Offset(cx - radius * 0.3f, cy - radius * 0.35f)
+            )
         }
 
         CandyColor.GREEN -> {

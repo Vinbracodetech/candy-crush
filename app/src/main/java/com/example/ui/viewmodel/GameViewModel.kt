@@ -77,6 +77,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     var showShopDialog = MutableStateFlow(false)
     var showDailySpinDialog = MutableStateFlow(false)
     var showMonetizationDialog = MutableStateFlow(false)
+    var showSettingsDialog = MutableStateFlow(false)
+    var showHowToPlayDialog = MutableStateFlow(false)
+    var showAchievementsDialog = MutableStateFlow(false)
 
     // User notice toast / popup state
     private val _userMessage = MutableStateFlow<String?>(null)
@@ -213,13 +216,42 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         adManager.showRewardedAd(
             reason = RewardReason.CONTINUE_LEVEL,
             onRewardGranted = {
-                engine?.addExtraMoves(5)
+                engine?.addExtraMoves(15)
                 _engineState.value = engine?.getState()
             },
             onCooldownActive = { remaining ->
                 notifyCooldown(remaining)
             }
         )
+    }
+
+    fun buyExtraMovesWithCoins(cost: Int = 100, moves: Int = 15) {
+        viewModelScope.launch {
+            val profile = playerProfile.value
+            if (profile.coins >= cost) {
+                repository.addCoins(-cost)
+                engine?.addExtraMoves(moves)
+                _engineState.value = engine?.getState()
+                soundSynth.playWinFanfare()
+                _userMessage.value = "Purchased +$moves moves! 🍬"
+            } else {
+                _userMessage.value = "Not enough coins! You have ${profile.coins} 🪙, need $cost 🪙."
+            }
+        }
+    }
+
+    fun buyLivesWithCoins(cost: Int = 200, amount: Int = 5) {
+        viewModelScope.launch {
+            val profile = playerProfile.value
+            if (profile.coins >= cost) {
+                repository.addCoins(-cost)
+                repository.restoreLives(amount)
+                soundSynth.playWinFanfare()
+                _userMessage.value = "Restored full $amount lives! ❤️"
+            } else {
+                _userMessage.value = "Not enough coins! You have ${profile.coins} 🪙, need $cost 🪙."
+            }
+        }
     }
 
     fun watchAdForLives() {
@@ -246,8 +278,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                         RewardReason.FREE_HAMMER -> repository.addBooster("hammer", 1)
                         RewardReason.FREE_SWAP -> repository.addBooster("swap", 1)
                         RewardReason.COLOR_BOMB_START -> repository.addBooster("bomb", 1)
-                        RewardReason.CONTINUE_LEVEL -> engine?.addExtraMoves(5)
+                        RewardReason.CONTINUE_LEVEL -> engine?.addExtraMoves(15)
                         RewardReason.DAILY_BONUS_SPIN -> showDailySpinDialog.value = true
+                        RewardReason.COINS_PACK -> {
+                            repository.addCoins(100)
+                            soundSynth.playWinFanfare()
+                            _userMessage.value = "+100 Coins added! 🪙"
+                        }
                     }
                     _engineState.value = engine?.getState()
                 }

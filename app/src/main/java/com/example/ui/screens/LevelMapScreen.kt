@@ -29,6 +29,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Close
@@ -78,6 +79,7 @@ import com.example.ui.theme.NeonCyanSecondary
 import com.example.ui.theme.NeonGoldTertiary
 import com.example.ui.theme.NeonGreenAccent
 import com.example.ui.theme.NeonPinkPrimary
+import com.example.ui.theme.NeonPurpleAccent
 import com.example.ui.theme.TextMuted
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
@@ -90,6 +92,10 @@ fun LevelMapScreen(
     onOpenShop: () -> Unit,
     onOpenDailySpin: () -> Unit,
     onOpenMonetizationStats: () -> Unit,
+    onOpenSettings: () -> Unit = {},
+    onOpenHowToPlay: () -> Unit = {},
+    onOpenAchievements: () -> Unit = {},
+    onBackToMainMenu: () -> Unit = {},
     onWatchAdForLives: () -> Unit,
     onToggleSound: () -> Unit,
     modifier: Modifier = Modifier
@@ -110,10 +116,10 @@ fun LevelMapScreen(
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = 110.dp, bottom = 90.dp),
+            contentPadding = PaddingValues(top = 95.dp, bottom = 150.dp),
             reverseLayout = false
         ) {
-            // Display levels 150 down to 1 (climbing up the mountain of candy)
+            // Display levels 350 down to 1 (climbing up the mountain of candy)
             itemsIndexed((350 downTo 1).toList()) { index, levelNum ->
                 val progress = levelProgressList.find { it.levelId == levelNum }
                 val isUnlocked = progress?.isUnlocked == true || levelNum == 1
@@ -188,15 +194,28 @@ fun LevelMapScreen(
             }
         }
 
-        // Top Glass HUD Bar
+        // Top Glass HUD Bar (Lives, Coins, Level progress)
         TopMapHudBar(
             profile = profile,
+            highestLevel = highestUnlockedLevel,
+            totalStars = levelProgressList.sumOf { it.stars },
+            onOpenShop = onOpenShop,
+            onOpenSettings = onOpenSettings,
+            onBackToMainMenu = onBackToMainMenu,
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
+
+        // Floating Professional Bottom Navigation Bar
+        BottomGameNavBar(
             onOpenShop = onOpenShop,
             onOpenDailySpin = onOpenDailySpin,
-            onOpenMonetizationStats = onOpenMonetizationStats,
-            onWatchAdForLives = onWatchAdForLives,
-            onToggleSound = onToggleSound,
-            modifier = Modifier.align(Alignment.TopCenter)
+            onOpenAchievements = onOpenAchievements,
+            onOpenHowToPlay = onOpenHowToPlay,
+            onOpenSettings = onOpenSettings,
+            onBackToMainMenu = onBackToMainMenu,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 60.dp)
         )
     }
 
@@ -219,20 +238,21 @@ fun LevelMapScreen(
 @Composable
 private fun TopMapHudBar(
     profile: PlayerProfile,
+    highestLevel: Int,
+    totalStars: Int,
     onOpenShop: () -> Unit,
-    onOpenDailySpin: () -> Unit,
-    onOpenMonetizationStats: () -> Unit,
-    onWatchAdForLives: () -> Unit,
-    onToggleSound: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onBackToMainMenu: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     GlassCard(
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        backgroundColor = Color(0xDD190933),
-        elevation = 12.dp
+            .padding(horizontal = 14.dp, vertical = 6.dp),
+        backgroundColor = Color(0xEE16072E),
+        borderColor = NeonCyanSecondary.copy(alpha = 0.5f),
+        elevation = 14.dp
     ) {
         Row(
             modifier = Modifier
@@ -241,44 +261,72 @@ private fun TopMapHudBar(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Lives with + refill button
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.Black.copy(alpha = 0.35f))
-                    .border(1.dp, NeonPinkPrimary.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                    .clickable { onWatchAdForLives() }
-            ) {
-                Text("❤️", fontSize = 16.sp)
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "${profile.lives}/${profile.maxLives}",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Box(
+            // Back to Menu Button + Lives
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(
+                    onClick = onBackToMainMenu,
                     modifier = Modifier
-                        .size(18.dp)
+                        .size(34.dp)
                         .clip(CircleShape)
-                        .background(NeonGreenAccent),
-                    contentAlignment = Alignment.Center
+                        .background(Color(0x33FFFFFF))
                 ) {
-                    Icon(Icons.Default.Add, "Refill", tint = Color.Black, modifier = Modifier.size(14.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back to Menu",
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(6.dp))
+
+                // Lives with + refill badge
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0x35FF2A85))
+                        .border(1.2.dp, NeonPinkPrimary, RoundedCornerShape(14.dp))
+                        .padding(horizontal = 8.dp, vertical = 5.dp)
+                        .clickable { onOpenShop() }
+                ) {
+                    Text("❤️", fontSize = 15.sp)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "${profile.lives}/${profile.maxLives}",
+                        color = Color.White,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 12.sp
+                    )
                 }
             }
 
-            // Coins
+            // Current Level Badge
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.Black.copy(alpha = 0.4f))
+                    .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("⭐", fontSize = 13.sp)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("$totalStars", color = NeonGoldTertiary, fontWeight = FontWeight.Black, fontSize = 12.sp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("• Lvl $highestLevel", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                }
+            }
+
+            // Coins Balance Pill
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.Black.copy(alpha = 0.35f))
-                    .border(1.dp, NeonGoldTertiary.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(0x35FFD700))
+                    .border(1.2.dp, NeonGoldTertiary, RoundedCornerShape(14.dp))
+                    .padding(horizontal = 11.dp, vertical = 5.dp)
                     .clickable { onOpenShop() }
             ) {
                 Text("🪙", fontSize = 16.sp)
@@ -289,35 +337,123 @@ private fun TopMapHudBar(
                     fontWeight = FontWeight.Black,
                     fontSize = 13.sp
                 )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("+", color = Color.White, fontWeight = FontWeight.Black, fontSize = 13.sp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun BottomGameNavBar(
+    onOpenShop: () -> Unit,
+    onOpenDailySpin: () -> Unit,
+    onOpenAchievements: () -> Unit,
+    onOpenHowToPlay: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onBackToMainMenu: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    GlassCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        backgroundColor = Color(0xF0180833),
+        borderColor = NeonPinkPrimary.copy(alpha = 0.6f),
+        elevation = 20.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 6.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Nav Item 1: Menu / Home
+            NavTabButton(
+                icon = "🏠",
+                label = "Menu",
+                onClick = onBackToMainMenu
+            )
+
+            // Nav Item 2: Shop
+            NavTabButton(
+                icon = "🍭",
+                label = "Shop",
+                badgeText = "HOT",
+                badgeColor = NeonPinkPrimary,
+                onClick = onOpenShop
+            )
+
+            // Nav Item 3: Center Play / Map Anchor
+            Box(
+                modifier = Modifier
+                    .size(50.dp)
+                    .shadow(12.dp, CircleShape, spotColor = NeonCyanSecondary)
+                    .clip(CircleShape)
+                    .background(Brush.linearGradient(listOf(NeonPinkPrimary, NeonPurpleAccent)))
+                    .border(2.dp, Color.White, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("🗺️", fontSize = 22.sp)
             }
 
-            // Quick Actions: Spin, Shop, Monetization, Sound
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // Daily Spin
-                IconButton(onClick = onOpenDailySpin, modifier = Modifier.size(36.dp)) {
-                    Text("🎡", fontSize = 20.sp)
-                }
+            // Nav Item 4: Daily Spin
+            NavTabButton(
+                icon = "🎡",
+                label = "Spin",
+                badgeText = "FREE",
+                badgeColor = NeonGreenAccent,
+                onClick = onOpenDailySpin
+            )
 
-                // Shop
-                IconButton(onClick = onOpenShop, modifier = Modifier.size(36.dp)) {
-                    Icon(Icons.Default.ShoppingBag, "Shop", tint = NeonCyanSecondary, modifier = Modifier.size(20.dp))
-                }
+            // Nav Item 5: Achievements
+            NavTabButton(
+                icon = "🏆",
+                label = "Trophies",
+                onClick = onOpenAchievements
+            )
+        }
+    }
+}
 
-                // Monetization Stats
-                IconButton(onClick = onOpenMonetizationStats, modifier = Modifier.size(36.dp)) {
-                    Icon(Icons.Default.BarChart, "Ad Stats", tint = NeonGreenAccent, modifier = Modifier.size(20.dp))
-                }
-
-                // Sound Toggle
-                IconButton(onClick = onToggleSound, modifier = Modifier.size(36.dp)) {
-                    Icon(
-                        imageVector = if (profile.soundEnabled) Icons.Default.VolumeUp else Icons.Default.VolumeMute,
-                        contentDescription = "Sound",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
+@Composable
+private fun NavTabButton(
+    icon: String,
+    label: String,
+    badgeText: String? = null,
+    badgeColor: Color = NeonPinkPrimary,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(contentAlignment = Alignment.TopEnd) {
+                Text(icon, fontSize = 22.sp)
+                if (badgeText != null) {
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 14.dp, bottom = 12.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(badgeColor)
+                            .padding(horizontal = 3.dp, vertical = 1.dp)
+                    ) {
+                        Text(badgeText, color = Color.Black, fontSize = 7.sp, fontWeight = FontWeight.Black)
+                    }
                 }
             }
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = label,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 10.sp
+            )
         }
     }
 }
@@ -500,11 +636,11 @@ private fun LevelPreviewDialog(
                                 Text("✦", color = NeonCyanSecondary, fontSize = 14.sp)
                                 Spacer(modifier = Modifier.width(8.dp))
                                 val label = when (goal.type) {
-                                    GoalType.SCORE -> "Reach Score: ${goal.targetAmount}"
-                                    GoalType.CLEAR_JELLY -> "Clear ${goal.targetAmount} Frosted Jelly"
-                                    GoalType.CLEAR_CHOCOLATE -> "Break ${goal.targetAmount} Chocolates"
-                                    GoalType.COLLECT_INGREDIENTS -> "Bring ${goal.targetAmount} Cherries to Bottom"
-                                    GoalType.COLLECT_COLOR -> "Collect ${goal.targetAmount} ${goal.targetColor?.displayName ?: ""} Candies"
+                                    GoalType.SCORE -> "⭐ Reach Score: ${goal.targetAmount}"
+                                    GoalType.CLEAR_JELLY -> "🧊 Clear ${goal.targetAmount} Frosted Jelly"
+                                    GoalType.CLEAR_CHOCOLATE -> "🍫 Break ${goal.targetAmount} Chocolates"
+                                    GoalType.COLLECT_INGREDIENTS -> "🍒 Bring ${goal.targetAmount} Cherries to Bottom"
+                                    GoalType.COLLECT_COLOR -> "${goal.targetColor?.fruitEmoji ?: "🍬"} Collect ${goal.targetAmount} ${goal.targetColor?.displayName ?: "Candies"}"
                                 }
                                 Text(label, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                             }

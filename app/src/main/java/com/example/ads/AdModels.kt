@@ -12,11 +12,12 @@ enum class AdType {
 
 enum class RewardReason(val title: String, val rewardDescription: String) {
     EXTRA_LIVES("Full Refill", "+5 Extra Lives"),
-    CONTINUE_LEVEL("Don't Give Up!", "+5 Extra Moves"),
+    CONTINUE_LEVEL("Don't Give Up!", "+15 Extra Moves"),
     FREE_HAMMER("Lollipop Hammer", "1 Free Hammer Booster"),
     FREE_SWAP("Free Hand Swap", "1 Free Swap Booster"),
     COLOR_BOMB_START("Rainbow Bomb", "Start with Color Bomb on Board"),
-    DAILY_BONUS_SPIN("Lucky Spin", "1 Free Extra Spin")
+    DAILY_BONUS_SPIN("Lucky Spin", "1 Free Extra Spin"),
+    COINS_PACK("Free Coins", "+100 Gold Coins")
 }
 
 data class AdCreative(

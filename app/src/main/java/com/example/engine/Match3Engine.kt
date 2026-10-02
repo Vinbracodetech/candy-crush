@@ -379,15 +379,12 @@ class Match3Engine(
                 val (r, c) = tilePos
                 val tile = board[r][c]
                 if (tile != null) {
-                    spawnParticles(c.toFloat(), r.toFloat(), tile.color.baseColor)
                     // Trigger tile's special if it had one
                     if (tile.special != SpecialType.NONE && tilePos !in specialCreations.keys) {
                         detonateSpecial(r, c, tile.special)
                     }
                     // Damage obstacles under/adjacent
                     damageObstaclesAt(r, c)
-                    // Update goal if color collection
-                    updateColorGoal(tile.color)
                     clearTile(r, c)
                 }
             }
@@ -509,6 +506,11 @@ class Match3Engine(
 
     private fun clearTile(r: Int, c: Int) {
         if (r in 0 until rows && c in 0 until cols) {
+            val tile = board[r][c]
+            if (tile != null) {
+                spawnParticles(c.toFloat(), r.toFloat(), tile.color.baseColor)
+                updateColorGoal(tile.color)
+            }
             board[r][c] = null
         }
     }

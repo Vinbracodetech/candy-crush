@@ -65,6 +65,9 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
     val showSpin by viewModel.showDailySpinDialog.collectAsStateWithLifecycle()
     val currentConfig by viewModel.currentLevelConfig.collectAsStateWithLifecycle()
     val engineState by viewModel.engineState.collectAsStateWithLifecycle()
+    val showSettings by viewModel.showSettingsDialog.collectAsStateWithLifecycle()
+    val showHowToPlay by viewModel.showHowToPlayDialog.collectAsStateWithLifecycle()
+    val showAchievements by viewModel.showAchievementsDialog.collectAsStateWithLifecycle()
 
     GlassBackground(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -74,8 +77,13 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
                     is ScreenState.MainMenu -> {
                         MainMenuScreen(
                             profile = profile,
+                            levelProgressList = levelProgressList,
                             onPlayClick = { viewModel.navigateToMap() },
-                            onToggleSound = { viewModel.toggleSound() }
+                            onOpenShop = { viewModel.showShopDialog.value = true },
+                            onOpenDailySpin = { viewModel.showDailySpinDialog.value = true },
+                            onOpenGuide = { viewModel.showHowToPlayDialog.value = true },
+                            onOpenAchievements = { viewModel.showAchievementsDialog.value = true },
+                            onOpenSettings = { viewModel.showSettingsDialog.value = true }
                         )
                     }
                     is ScreenState.LevelMap -> {
@@ -88,6 +96,10 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
                             onOpenShop = { viewModel.showShopDialog.value = true },
                             onOpenDailySpin = { viewModel.showDailySpinDialog.value = true },
                             onOpenMonetizationStats = { /* Removed */ },
+                            onOpenSettings = { viewModel.showSettingsDialog.value = true },
+                            onOpenHowToPlay = { viewModel.showHowToPlayDialog.value = true },
+                            onOpenAchievements = { viewModel.showAchievementsDialog.value = true },
+                            onBackToMainMenu = { viewModel.navigateToMainMenu() },
                             onWatchAdForLives = { viewModel.watchAdForLives() },
                             onToggleSound = { viewModel.toggleSound() }
                         )
@@ -103,6 +115,7 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
                                 onTileClick = { r, c -> viewModel.onTileClick(r, c) },
                                 onSelectBooster = { booster -> viewModel.selectBooster(booster) },
                                 onWatchAdForExtraMoves = { viewModel.watchAdForExtraMoves() },
+                                onBuyMovesWithCoins = { viewModel.buyExtraMovesWithCoins(100, 15) },
                                 onNextLevel = { viewModel.nextLevel() },
                                 onRetryLevel = { viewModel.retryLevel() },
                                 onExitToMap = { viewModel.exitToMap() },
@@ -122,10 +135,13 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
 
         if (showShop) {
             val remainingCooldown = viewModel.adManager.getRemainingRewardedCooldownSeconds()
+            val coinsCooldown = viewModel.adManager.getRemainingRewardedCooldownSeconds(com.example.ads.RewardReason.COINS_PACK)
             BoosterShopDialog(
                 profile = profile,
                 cooldownSeconds = remainingCooldown,
+                coinsCooldownSeconds = coinsCooldown,
                 onBuyBooster = { type, cost -> viewModel.buyBoosterWithCoins(type, cost) },
+                onBuyLives = { cost -> viewModel.buyLivesWithCoins(cost, 5) },
                 onWatchAdForReward = { reason -> viewModel.watchAdForReward(reason) },
                 onDismiss = { viewModel.showShopDialog.value = false }
             )
@@ -178,6 +194,40 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
                     viewModel.watchAdForReward(RewardReason.DAILY_BONUS_SPIN)
                 },
                 onDismiss = { viewModel.showDailySpinDialog.value = false }
+            )
+        }
+
+        if (showSettings) {
+            com.example.ui.screens.GameSettingsDialog(
+                profile = profile,
+                onToggleSound = { viewModel.toggleSound() },
+                onOpenHowToPlay = {
+                    viewModel.showSettingsDialog.value = false
+                    viewModel.showHowToPlayDialog.value = true
+                },
+                onOpenAchievements = {
+                    viewModel.showSettingsDialog.value = false
+                    viewModel.showAchievementsDialog.value = true
+                },
+                onOpenShop = {
+                    viewModel.showSettingsDialog.value = false
+                    viewModel.showShopDialog.value = true
+                },
+                onDismiss = { viewModel.showSettingsDialog.value = false }
+            )
+        }
+
+        if (showHowToPlay) {
+            com.example.ui.screens.HowToPlayDialog(
+                onDismiss = { viewModel.showHowToPlayDialog.value = false }
+            )
+        }
+
+        if (showAchievements) {
+            com.example.ui.screens.AchievementsDialog(
+                profile = profile,
+                levelProgressList = levelProgressList,
+                onDismiss = { viewModel.showAchievementsDialog.value = false }
             )
         }
     }

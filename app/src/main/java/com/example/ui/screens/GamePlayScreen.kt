@@ -73,6 +73,7 @@ import com.example.ui.components.GlassBadge
 import com.example.ui.components.GlassButton
 import com.example.ui.components.GlassCard
 import com.example.ui.components.GlassProgressBar
+import com.example.ui.components.VictoryConfettiEffect
 import com.example.ui.theme.ButtonCyanGlassBrush
 import com.example.ui.theme.ButtonGoldGlassBrush
 import com.example.ui.theme.ButtonPinkGlassBrush
@@ -92,6 +93,7 @@ fun GamePlayScreen(
     onTileClick: (Int, Int) -> Unit,
     onSelectBooster: (String) -> Unit,
     onWatchAdForExtraMoves: () -> Unit,
+    onBuyMovesWithCoins: () -> Unit = {},
     onNextLevel: () -> Unit,
     onRetryLevel: () -> Unit,
     onExitToMap: () -> Unit,
@@ -214,7 +216,8 @@ fun GamePlayScreen(
                 profile = profile,
                 activeBooster = engineState.activeBooster,
                 onSelectBooster = onSelectBooster,
-                onWatchAdForExtraMoves = onWatchAdForExtraMoves
+                onWatchAdForExtraMoves = onWatchAdForExtraMoves,
+                onBuyMovesWithCoins = onBuyMovesWithCoins
             )
 
             Spacer(modifier = Modifier.height(72.dp)) // Space for bottom banner ad
@@ -222,6 +225,7 @@ fun GamePlayScreen(
 
         // Victory Dialog
         if (engineState.isGameWon) {
+            VictoryConfettiEffect()
             LevelWinDialog(
                 levelNumber = levelConfig.levelNumber,
                 score = engineState.currentScore,
@@ -239,6 +243,7 @@ fun GamePlayScreen(
                 levelNumber = levelConfig.levelNumber,
                 profile = profile,
                 onWatchAdForMoves = onWatchAdForExtraMoves,
+                onBuyMovesWithCoins = onBuyMovesWithCoins,
                 onRetry = onRetryLevel,
                 onExitToMap = onExitToMap
             )
@@ -354,38 +359,59 @@ private fun GameTopHud(
 @Composable
 private fun GoalChip(goal: com.example.data.model.LevelGoal, modifier: Modifier = Modifier) {
     val isDone = goal.isCompleted
+    val colorAccent = goal.targetColor?.baseColor ?: if (isDone) NeonGreenAccent else Color.White
+
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(if (isDone) Color(0x3300E676) else Color(0x22000000))
-            .border(1.dp, if (isDone) NeonGreenAccent else Color.White.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
-            .padding(horizontal = 6.dp, vertical = 3.dp),
+            .clip(RoundedCornerShape(10.dp))
+            .background(
+                if (isDone) Color(0x3300E676)
+                else Color(0x35000000)
+            )
+            .border(
+                width = 1.2.dp,
+                color = if (isDone) NeonGreenAccent else colorAccent.copy(alpha = 0.5f),
+                shape = RoundedCornerShape(10.dp)
+            )
+            .padding(horizontal = 8.dp, vertical = 5.dp),
         contentAlignment = Alignment.Center
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
             val icon = when (goal.type) {
                 GoalType.SCORE -> "⭐"
                 GoalType.CLEAR_JELLY -> "🧊"
                 GoalType.CLEAR_CHOCOLATE -> "🍫"
                 GoalType.COLLECT_INGREDIENTS -> "🍒"
-                GoalType.COLLECT_COLOR -> "🍬"
+                GoalType.COLLECT_COLOR -> goal.targetColor?.fruitEmoji ?: "🍬"
             }
             val actionText = when (goal.type) {
                 GoalType.SCORE -> "Score"
-                GoalType.CLEAR_JELLY -> "Clear Jelly"
-                GoalType.CLEAR_CHOCOLATE -> "Clear Choco"
-                GoalType.COLLECT_INGREDIENTS -> "Drop Cherries"
-                GoalType.COLLECT_COLOR -> "Collect ${goal.targetColor?.displayName ?: "Candy"}"
+                GoalType.CLEAR_JELLY -> "Frosting"
+                GoalType.CLEAR_CHOCOLATE -> "Choco"
+                GoalType.COLLECT_INGREDIENTS -> "Cherries"
+                GoalType.COLLECT_COLOR -> goal.targetColor?.displayName ?: "Candies"
             }
-            Text(icon, fontSize = 14.sp)
-            Spacer(modifier = Modifier.width(4.dp))
+
+            Text(icon, fontSize = 16.sp)
+            Spacer(modifier = Modifier.width(5.dp))
             val remaining = maxOf(0, goal.targetAmount - goal.currentAmount)
-            Text(
-                text = if (isDone) "DONE ✓" else "$actionText: $remaining",
-                color = if (isDone) NeonGreenAccent else Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 11.sp
-            )
+            Column {
+                Text(
+                    text = actionText,
+                    color = if (isDone) NeonGreenAccent else Color.White.copy(alpha = 0.8f),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.sp
+                )
+                Text(
+                    text = if (isDone) "COMPLETE ✓" else "$remaining left",
+                    color = if (isDone) NeonGreenAccent else (goal.targetColor?.glowColor ?: NeonGoldTertiary),
+                    fontWeight = FontWeight.Black,
+                    fontSize = 11.sp
+                )
+            }
         }
     }
 }
@@ -395,7 +421,8 @@ private fun InGameBoosterBar(
     profile: PlayerProfile,
     activeBooster: String?,
     onSelectBooster: (String) -> Unit,
-    onWatchAdForExtraMoves: () -> Unit
+    onWatchAdForExtraMoves: () -> Unit,
+    onBuyMovesWithCoins: () -> Unit = {}
 ) {
     GlassCard(
         modifier = Modifier.fillMaxWidth(),
@@ -404,7 +431,7 @@ private fun InGameBoosterBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 6.dp),
+                .padding(horizontal = 6.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -435,23 +462,43 @@ private fun InGameBoosterBar(
                 onClick = { onSelectBooster("bomb") }
             )
 
-            // Booster 4: Watch Ad for +5 Moves
+            // Booster 4: Watch Ad for +15 Moves
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(12.dp))
                     .background(Brush.horizontalGradient(listOf(Color(0xFF00C9FF), Color(0xFF00E676))))
                     .border(1.dp, Color.White, RoundedCornerShape(12.dp))
                     .clickable { onWatchAdForExtraMoves() }
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                    .padding(horizontal = 7.dp, vertical = 6.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Videocam, "Ad", tint = Color.White, modifier = Modifier.size(14.dp))
+                        Icon(Icons.Default.Videocam, "Ad", tint = Color.White, modifier = Modifier.size(13.dp))
                         Spacer(modifier = Modifier.width(2.dp))
-                        Text("+5 Moves", color = Color.White, fontWeight = FontWeight.Black, fontSize = 11.sp)
+                        Text("+15 Moves", color = Color.White, fontWeight = FontWeight.Black, fontSize = 10.sp)
                     }
-                    Text("FREE AD", color = Color.White.copy(alpha = 0.9f), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text("FREE AD", color = Color.White.copy(alpha = 0.9f), fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            // Booster 5: Spend 100 Coins for +15 Moves
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(if (profile.coins >= 100) Brush.horizontalGradient(listOf(Color(0xFFFFB300), Color(0xFFFF7A00))) else Brush.linearGradient(listOf(Color(0x33FFFFFF), Color(0x22FFFFFF))))
+                    .border(1.dp, if (profile.coins >= 100) NeonGoldTertiary else Color.White.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                    .clickable(enabled = profile.coins >= 100) { onBuyMovesWithCoins() }
+                    .padding(horizontal = 7.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("🪙", fontSize = 11.sp)
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Text("+15 Moves", color = Color.White, fontWeight = FontWeight.Black, fontSize = 10.sp)
+                    }
+                    Text("100 COINS", color = Color.White.copy(alpha = 0.9f), fontSize = 8.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -587,6 +634,7 @@ private fun LevelFailDialog(
     levelNumber: Int,
     profile: PlayerProfile,
     onWatchAdForMoves: () -> Unit,
+    onBuyMovesWithCoins: () -> Unit = {},
     onRetry: () -> Unit,
     onExitToMap: () -> Unit
 ) {
@@ -607,7 +655,7 @@ private fun LevelFailDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Watch Rewarded Ad Continue Option
+                // Continue Playing Options: Watch Ad (+15 Moves) or Coins (100 Coins -> +15 Moves)
                 GlassCard(
                     modifier = Modifier.fillMaxWidth(),
                     backgroundColor = Color(0x3300E676),
@@ -621,8 +669,10 @@ private fun LevelFailDialog(
                     ) {
                         Text("CONTINUE PLAYING", color = NeonGreenAccent, fontWeight = FontWeight.Black, fontSize = 12.sp)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("+5 Extra Moves Instantly!", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Text("+15 Extra Moves Instantly!", color = Color.White, fontWeight = FontWeight.Black, fontSize = 16.sp)
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Watch Ad Button
                         GlassButton(
                             onClick = onWatchAdForMoves,
                             brush = ButtonCyanGlassBrush,
@@ -630,7 +680,19 @@ private fun LevelFailDialog(
                         ) {
                             Icon(Icons.Default.Videocam, "Ad", tint = Color.White)
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("WATCH AD FOR +5 MOVES", color = Color.White, fontWeight = FontWeight.Black, fontSize = 13.sp)
+                            Text("WATCH AD FOR +15 MOVES", color = Color.White, fontWeight = FontWeight.Black, fontSize = 13.sp)
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Buy with Coins Button (100 Coins)
+                        GlassButton(
+                            onClick = onBuyMovesWithCoins,
+                            enabled = profile.coins >= 100,
+                            brush = ButtonGoldGlassBrush,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("🪙 BUY +15 MOVES (100 COINS)", color = Color.White, fontWeight = FontWeight.Black, fontSize = 13.sp)
                         }
                     }
                 }

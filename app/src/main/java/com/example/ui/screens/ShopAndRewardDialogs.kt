@@ -6,6 +6,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -65,7 +67,9 @@ import kotlin.random.Random
 fun BoosterShopDialog(
     profile: PlayerProfile,
     cooldownSeconds: Long = 0L,
+    coinsCooldownSeconds: Long = 0L,
     onBuyBooster: (type: String, cost: Int) -> Unit,
+    onBuyLives: (cost: Int) -> Unit = {},
     onWatchAdForReward: (RewardReason) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -75,15 +79,27 @@ fun BoosterShopDialog(
         val s = cooldownSeconds % 60
         "${m}m ${s}s"
     } else ""
+
+    val isCoinsCooldown = coinsCooldownSeconds > 0L
+    val coinsCooldownText = if (isCoinsCooldown) {
+        val m = coinsCooldownSeconds / 60
+        val s = coinsCooldownSeconds % 60
+        "${m}m ${s}s"
+    } else ""
+
     Dialog(onDismissRequest = onDismiss) {
         GlassCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            backgroundColor = Color(0xEE1A0A33)
+                .padding(14.dp),
+            backgroundColor = Color(0xF2160C26),
+            borderColor = Color(0x40FFFFFF),
+            elevation = 16.dp
         ) {
             Column(
-                modifier = Modifier.padding(18.dp),
+                modifier = Modifier
+                    .padding(20.dp)
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Header
@@ -92,84 +108,212 @@ fun BoosterShopDialog(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "🍭 Candy Shop & Free Boosts",
-                        color = Color.White,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Black
-                    )
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, "Close", tint = Color.White)
+                    Column {
+                        Text(
+                            text = "Candy Boutique",
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Boosters & Rewards",
+                            color = TextMuted,
+                            fontSize = 12.sp
+                        )
                     }
-                }
-
-                // Balance HUD
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color.Black.copy(alpha = 0.35f))
-                        .padding(horizontal = 14.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("🪙", fontSize = 18.sp)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("${profile.coins} Coins", color = NeonGoldTertiary, fontWeight = FontWeight.Bold)
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("❤️", fontSize = 18.sp)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("${profile.lives}/${profile.maxLives} Lives", color = NeonPinkPrimary, fontWeight = FontWeight.Bold)
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(Color(0x22FFFFFF))
+                    ) {
+                        Icon(Icons.Default.Close, "Close", tint = Color.White.copy(alpha = 0.85f), modifier = Modifier.size(18.dp))
                     }
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Watch Ad for Instant Full Lives
+                // Balance HUD - Soft subtle dark slate container
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0x550B0418))
+                        .border(1.dp, Color(0x25FFFFFF), RoundedCornerShape(14.dp))
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("🪙", fontSize = 17.sp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "${profile.coins} Coins",
+                            color = Color(0xFFFFD54F),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("❤️", fontSize = 17.sp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "${profile.lives}/${profile.maxLives} Lives",
+                            color = Color(0xFFFF80AB),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Get Free Coins (+100 Gold Coins) - Soft warm honey glass
                 GlassCard(
                     modifier = Modifier.fillMaxWidth(),
-                    backgroundColor = Color(0x33FF2A85),
-                    borderColor = NeonPinkPrimary
+                    backgroundColor = Color(0x1EFFE082),
+                    borderColor = Color(0x55FFCA28),
+                    borderWidth = 1.dp
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(12.dp),
+                            .padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("💖", fontSize = 26.sp)
+                            Text("🪙", fontSize = 24.sp)
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
-                                Text("Refill All 5 Lives", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                Text("Watch 1 Rewarded Ad", color = NeonCyanSecondary, fontSize = 11.sp)
+                                Text("+100 Gold Coins", color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                Text(
+                                    if (isCoinsCooldown) "Available in $coinsCooldownText" else "Free bonus video",
+                                    color = Color(0xFFFFE082),
+                                    fontSize = 11.sp
+                                )
                             }
                         }
                         GlassButton(
                             onClick = {
                                 onDismiss()
-                                onWatchAdForReward(RewardReason.EXTRA_LIVES)
+                                onWatchAdForReward(RewardReason.COINS_PACK)
                             },
-                            enabled = !isCooldown,
-                            brush = if (!isCooldown) ButtonPinkGlassBrush else androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color(0x33FFFFFF), Color(0x22FFFFFF))),
-                            padding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                            enabled = !isCoinsCooldown,
+                            brush = if (!isCoinsCooldown) {
+                                Brush.horizontalGradient(listOf(Color(0xFFE6A728), Color(0xFFC7841B)))
+                            } else {
+                                Brush.linearGradient(listOf(Color(0x22FFFFFF), Color(0x11FFFFFF)))
+                            },
+                            padding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 7.dp)
                         ) {
-                            Icon(Icons.Default.Videocam, "Ad", tint = Color.White, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Videocam, "Ad", tint = Color.White, modifier = Modifier.size(14.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(if (isCooldown) cooldownText else "FREE", color = Color.White, fontWeight = FontWeight.Black, fontSize = 12.sp)
+                            Text(
+                                if (isCoinsCooldown) coinsCooldownText else "+100 🪙",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp
+                            )
                         }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
+                // Refill All 5 Lives - Soft blush rose glass
+                GlassCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = Color(0x18FF80AB),
+                    borderColor = Color(0x45FF80AB),
+                    borderWidth = 1.dp
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("💖", fontSize = 24.sp)
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text("Full Lives Refill", color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                    Text("Restore 5/5 lives instantly", color = TextSecondary, fontSize = 11.sp)
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            // Watch Ad
+                            GlassButton(
+                                onClick = {
+                                    onDismiss()
+                                    onWatchAdForReward(RewardReason.EXTRA_LIVES)
+                                },
+                                enabled = !isCooldown,
+                                brush = if (!isCooldown) {
+                                    Brush.horizontalGradient(listOf(Color(0xFF8E44AD), Color(0xFF6C3483)))
+                                } else {
+                                    Brush.linearGradient(listOf(Color(0x22FFFFFF), Color(0x11FFFFFF)))
+                                },
+                                modifier = Modifier.weight(1f),
+                                padding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 7.dp)
+                            ) {
+                                Icon(Icons.Default.Videocam, "Ad", tint = Color.White, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(if (isCooldown) cooldownText else "Free Ad", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            }
+                            // Buy with Coins (200 coins)
+                            GlassButton(
+                                onClick = {
+                                    onDismiss()
+                                    onBuyLives(200)
+                                },
+                                enabled = profile.coins >= 200,
+                                brush = Brush.horizontalGradient(listOf(Color(0xFF7A6432), Color(0xFF665226))),
+                                modifier = Modifier.weight(1f),
+                                padding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 7.dp)
+                            ) {
+                                Text("🪙 200 Coins", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Section Label
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    Text(
+                        text = "POWER-UP BOOSTERS",
+                        color = TextMuted,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
                 // Booster Item 1: Lollipop Hammer
                 ShopItemRow(
                     icon = "🍭",
                     title = "Lollipop Hammer",
+                    description = "Smash any single candy",
                     ownedCount = profile.hammerBoosters,
                     coinCost = 80,
                     canAfford = profile.coins >= 80,
@@ -187,7 +331,8 @@ fun BoosterShopDialog(
                 // Booster Item 2: Free Hand Swap
                 ShopItemRow(
                     icon = "🔄",
-                    title = "Free Hand Swap",
+                    title = "Hand Swap",
+                    description = "Swap 2 tiles without moves",
                     ownedCount = profile.swapBoosters,
                     coinCost = 100,
                     canAfford = profile.coins >= 100,
@@ -205,7 +350,8 @@ fun BoosterShopDialog(
                 // Booster Item 3: Color Bomb Start
                 ShopItemRow(
                     icon = "🌈",
-                    title = "Rainbow Color Bomb",
+                    title = "Color Bomb",
+                    description = "Clear all of chosen candy",
                     ownedCount = profile.colorBombBoosters,
                     coinCost = 120,
                     canAfford = profile.coins >= 120,
@@ -226,6 +372,7 @@ fun BoosterShopDialog(
 private fun ShopItemRow(
     icon: String,
     title: String,
+    description: String = "",
     ownedCount: Int,
     coinCost: Int,
     canAfford: Boolean,
@@ -236,48 +383,85 @@ private fun ShopItemRow(
 ) {
     GlassCard(
         modifier = Modifier.fillMaxWidth(),
-        backgroundColor = Color(0x22FFFFFF),
-        elevation = 2.dp
+        backgroundColor = Color(0x18FFFFFF),
+        borderColor = Color(0x28FFFFFF),
+        borderWidth = 1.dp,
+        elevation = 4.dp
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp),
+                .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(icon, fontSize = 24.sp)
-                Spacer(modifier = Modifier.width(8.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0x22FFFFFF))
+                        .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(10.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(icon, fontSize = 20.sp)
+                }
+                Spacer(modifier = Modifier.width(10.dp))
                 Column {
-                    Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                    Text("Owned: $ownedCount", color = TextMuted, fontSize = 11.sp)
+                    Text(title, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                    if (description.isNotEmpty()) {
+                        Text(description, color = TextMuted, fontSize = 10.sp)
+                    }
+                    Text("Owned: $ownedCount", color = Color(0xFFC7BCE6), fontSize = 10.sp, fontWeight = FontWeight.Medium)
                 }
             }
 
+            Spacer(modifier = Modifier.width(8.dp))
+
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Free Ad Button
+                // Free Ad Button - Muted subtle lavender blue
                 GlassButton(
                     onClick = onWatchAd,
                     enabled = !isCooldown,
-                    brush = if (!isCooldown) ButtonCyanGlassBrush else androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color(0x33FFFFFF), Color(0x22FFFFFF))),
+                    brush = if (!isCooldown) {
+                        Brush.horizontalGradient(listOf(Color(0xFF3A506B), Color(0xFF2C3E50)))
+                    } else {
+                        Brush.linearGradient(listOf(Color(0x22FFFFFF), Color(0x11FFFFFF)))
+                    },
                     padding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                 ) {
-                    Icon(Icons.Default.Videocam, "Ad", tint = Color.White, modifier = Modifier.size(14.dp))
-                    Spacer(modifier = Modifier.width(2.dp))
-                    Text(if (isCooldown) cooldownText else "Free", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Icon(Icons.Default.Videocam, "Ad", tint = Color.White, modifier = Modifier.size(13.dp))
+                    Spacer(modifier = Modifier.width(3.dp))
+                    Text(
+                        if (isCooldown) cooldownText else "Free",
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
 
                 Spacer(modifier = Modifier.width(6.dp))
 
-                // Buy with Coins Button
+                // Buy with Coins Button - Soft honey amber
                 GlassButton(
                     onClick = onBuy,
                     enabled = canAfford,
-                    brush = ButtonGoldGlassBrush,
+                    brush = if (canAfford) {
+                        Brush.horizontalGradient(listOf(Color(0xFFB8860B), Color(0xFF8F6307)))
+                    } else {
+                        Brush.linearGradient(listOf(Color(0x22FFFFFF), Color(0x11FFFFFF)))
+                    },
                     padding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                 ) {
-                    Text("🪙 $coinCost", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        "🪙 $coinCost",
+                        color = if (canAfford) Color.White else TextMuted,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
         }
@@ -373,12 +557,12 @@ fun DailyLuckyWheelDialog(
                             val w = size.width
                             val h = size.height
                             val colors = listOf(
-                                Color(0xFFFF2A85),
-                                Color(0xFF00C9FF),
-                                Color(0xFFFFD000),
-                                Color(0xFF00E676),
-                                Color(0xFF9C27B0),
-                                Color(0xFFFF7043)
+                                Color(0xFF9B51E0), // Soft Royal Amethyst
+                                Color(0xFF2D9CDB), // Soft Cerulean
+                                Color(0xFFD4AC0D), // Warm Amber
+                                Color(0xFF27AE60), // Emerald Sage
+                                Color(0xFFD9455F), // Rose Coral
+                                Color(0xFF6C5CE7)  // Periwinkle
                             )
                             for (i in 0 until 6) {
                                 drawArc(
