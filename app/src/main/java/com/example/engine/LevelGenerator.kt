@@ -39,19 +39,19 @@ object LevelGenerator {
         val rows = 8
         val cols = 8
 
-        // Move calculation: strictly decrease moves as level increases for tight, strategic, challenging puzzle gameplay
+        // Move calculation: generous, balanced, engaging puzzle gameplay where players have enough breathing room
         val baseMoves = when {
-            levelNumber <= 3 -> 24
-            levelNumber <= 7 -> 22
-            levelNumber <= 10 -> 20
-            levelNumber <= 15 -> 18
-            levelNumber <= 25 -> 17
-            levelNumber <= 40 -> 16
-            levelNumber <= 60 -> 15
-            levelNumber <= 100 -> 14
-            levelNumber <= 180 -> 13
-            levelNumber <= 260 -> 12
-            else -> 11
+            levelNumber <= 3 -> 34
+            levelNumber <= 7 -> 30
+            levelNumber <= 10 -> 28
+            levelNumber <= 15 -> 26
+            levelNumber <= 25 -> 25
+            levelNumber <= 40 -> 24
+            levelNumber <= 60 -> 23
+            levelNumber <= 100 -> 22
+            levelNumber <= 180 -> 21
+            levelNumber <= 260 -> 20
+            else -> 19
         }
 
         // Color distribution: higher color counts make matches significantly more challenging

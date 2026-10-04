@@ -68,6 +68,9 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
     val showSettings by viewModel.showSettingsDialog.collectAsStateWithLifecycle()
     val showHowToPlay by viewModel.showHowToPlayDialog.collectAsStateWithLifecycle()
     val showAchievements by viewModel.showAchievementsDialog.collectAsStateWithLifecycle()
+    val showFeedback by viewModel.showFeedbackDialog.collectAsStateWithLifecycle()
+    val showDailyLogin by viewModel.showDailyLoginDialog.collectAsStateWithLifecycle()
+    val isLoginClaimable by viewModel.isDailyLoginClaimable.collectAsStateWithLifecycle()
 
     GlassBackground(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -78,27 +81,33 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
                         MainMenuScreen(
                             profile = profile,
                             levelProgressList = levelProgressList,
+                            isDailyLoginClaimable = isLoginClaimable,
                             onPlayClick = { viewModel.navigateToMap() },
                             onOpenShop = { viewModel.showShopDialog.value = true },
                             onOpenDailySpin = { viewModel.showDailySpinDialog.value = true },
+                            onOpenDailyLogin = { viewModel.showDailyLoginDialog.value = true },
                             onOpenGuide = { viewModel.showHowToPlayDialog.value = true },
                             onOpenAchievements = { viewModel.showAchievementsDialog.value = true },
-                            onOpenSettings = { viewModel.showSettingsDialog.value = true }
+                            onOpenSettings = { viewModel.showSettingsDialog.value = true },
+                            onOpenFeedback = { viewModel.showFeedbackDialog.value = true }
                         )
                     }
                     is ScreenState.LevelMap -> {
                         LevelMapScreen(
                             profile = profile,
                             levelProgressList = levelProgressList,
+                            isDailyLoginClaimable = isLoginClaimable,
                             onSelectLevel = { levelNum, useVipColorBomb ->
                                 viewModel.startLevel(levelNum, useVipColorBomb)
                             },
                             onOpenShop = { viewModel.showShopDialog.value = true },
                             onOpenDailySpin = { viewModel.showDailySpinDialog.value = true },
+                            onOpenDailyLogin = { viewModel.showDailyLoginDialog.value = true },
                             onOpenMonetizationStats = { /* Removed */ },
                             onOpenSettings = { viewModel.showSettingsDialog.value = true },
                             onOpenHowToPlay = { viewModel.showHowToPlayDialog.value = true },
                             onOpenAchievements = { viewModel.showAchievementsDialog.value = true },
+                            onOpenFeedback = { viewModel.showFeedbackDialog.value = true },
                             onBackToMainMenu = { viewModel.navigateToMainMenu() },
                             onWatchAdForLives = { viewModel.watchAdForLives() },
                             onToggleSound = { viewModel.toggleSound() }
@@ -119,6 +128,7 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
                                 onNextLevel = { viewModel.nextLevel() },
                                 onRetryLevel = { viewModel.retryLevel() },
                                 onExitToMap = { viewModel.exitToMap() },
+                                onOpenFeedback = { viewModel.showFeedbackDialog.value = true },
                                 onToggleSound = { viewModel.toggleSound() }
                             )
                         }
@@ -134,12 +144,9 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
         }
 
         if (showShop) {
-            val remainingCooldown = viewModel.adManager.getRemainingRewardedCooldownSeconds()
-            val coinsCooldown = viewModel.adManager.getRemainingRewardedCooldownSeconds(com.example.ads.RewardReason.COINS_PACK)
             BoosterShopDialog(
                 profile = profile,
-                cooldownSeconds = remainingCooldown,
-                coinsCooldownSeconds = coinsCooldown,
+                getCooldownSeconds = { reason -> viewModel.adManager.getRemainingRewardedCooldownSeconds(reason) },
                 onBuyBooster = { type, cost -> viewModel.buyBoosterWithCoins(type, cost) },
                 onBuyLives = { cost -> viewModel.buyLivesWithCoins(cost, 5) },
                 onWatchAdForReward = { reason -> viewModel.watchAdForReward(reason) },
@@ -213,6 +220,10 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
                     viewModel.showSettingsDialog.value = false
                     viewModel.showShopDialog.value = true
                 },
+                onOpenFeedback = {
+                    viewModel.showSettingsDialog.value = false
+                    viewModel.showFeedbackDialog.value = true
+                },
                 onDismiss = { viewModel.showSettingsDialog.value = false }
             )
         }
@@ -228,6 +239,24 @@ fun CandyCrushGlassApp(viewModel: GameViewModel) {
                 profile = profile,
                 levelProgressList = levelProgressList,
                 onDismiss = { viewModel.showAchievementsDialog.value = false }
+            )
+        }
+
+        if (showFeedback) {
+            val maxLevel = levelProgressList.maxOfOrNull { it.levelId } ?: (currentConfig?.levelNumber ?: 1)
+            com.example.ui.screens.FeedbackRatingDialog(
+                currentLevelReached = maxLevel,
+                onRewardCoins = { coins -> viewModel.rewardFeedbackCoins(coins) },
+                onDismiss = { viewModel.showFeedbackDialog.value = false }
+            )
+        }
+
+        if (showDailyLogin) {
+            com.example.ui.screens.DailyLoginRewardDialog(
+                currentStreak = profile.dailyLoginStreak,
+                isClaimableToday = isLoginClaimable,
+                onClaimReward = { reward -> viewModel.claimDailyLoginReward(reward) },
+                onDismiss = { viewModel.showDailyLoginDialog.value = false }
             )
         }
     }

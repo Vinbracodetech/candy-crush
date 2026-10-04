@@ -34,7 +34,9 @@ data class PlayerProfile(
     val hapticEnabled: Boolean = true,
     val lastDailySpinDate: Long = 0L,
     val totalAdsWatched: Int = 0,
-    val totalScore: Long = 0L
+    val totalScore: Long = 0L,
+    val lastDailyLoginDate: Long = 0L,
+    val dailyLoginStreak: Int = 0
 )
 
 @Dao
@@ -66,7 +68,7 @@ interface PlayerProfileDao {
 
 @Database(
     entities = [LevelProgress::class, PlayerProfile::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

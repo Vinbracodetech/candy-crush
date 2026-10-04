@@ -70,12 +70,15 @@ import com.example.ui.theme.TextSecondary
 fun MainMenuScreen(
     profile: PlayerProfile,
     levelProgressList: List<LevelProgress> = emptyList(),
+    isDailyLoginClaimable: Boolean = false,
     onPlayClick: () -> Unit,
     onOpenShop: () -> Unit = {},
     onOpenDailySpin: () -> Unit = {},
+    onOpenDailyLogin: () -> Unit = {},
     onOpenGuide: () -> Unit = {},
     onOpenAchievements: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
+    onOpenFeedback: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val highestUnlockedLevel = levelProgressList.filter { it.isUnlocked }.maxOfOrNull { it.levelId } ?: 1
@@ -277,6 +280,58 @@ fun MainMenuScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
+            // Daily Login Gift Calendar Card
+            GlassCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onOpenDailyLogin),
+                backgroundColor = if (isDailyLoginClaimable) Color(0x35FFD700) else Color(0x22FFFFFF),
+                borderColor = if (isDailyLoginClaimable) NeonGoldTertiary else Color.White.copy(alpha = 0.3f)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 13.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("🎁", fontSize = 28.sp)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Daily Login Boosters", color = Color.White, fontWeight = FontWeight.Black, fontSize = 15.sp)
+                                if (profile.dailyLoginStreak > 0) {
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Day ${(profile.dailyLoginStreak - 1) % 7 + 1}/7", color = NeonCyanSecondary, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                }
+                            }
+                            Text(
+                                if (isDailyLoginClaimable) "Free daily hammer, swap, & bombs ready!" else "Streak: ${profile.dailyLoginStreak} Days • Check calendar",
+                                color = if (isDailyLoginClaimable) NeonGoldTertiary else TextSecondary,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+
+                    if (isDailyLoginClaimable) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(NeonGreenAccent)
+                                .padding(horizontal = 10.dp, vertical = 5.dp)
+                        ) {
+                            Text("CLAIM", color = Color.Black, fontWeight = FontWeight.Black, fontSize = 11.sp)
+                        }
+                    } else {
+                        Text("VIEW ›", color = NeonCyanSecondary, fontWeight = FontWeight.Black, fontSize = 12.sp)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
             // Quick Access Cards Grid (Shop & Lucky Spin)
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -376,6 +431,35 @@ fun MainMenuScreen(
                             Text("Combo Guide", color = TextSecondary, fontSize = 10.sp)
                         }
                     }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Dedicated Player Rating & Feedback Card on Menu Page
+            GlassCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onOpenFeedback),
+                backgroundColor = Color(0x30FFD700),
+                borderColor = NeonGoldTertiary.copy(alpha = 0.8f)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("⭐", fontSize = 22.sp)
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text("Rate Game & Feedback", color = Color.White, fontWeight = FontWeight.Black, fontSize = 14.sp)
+                            Text("Share your review on Google Play (+150 🪙)", color = NeonGoldTertiary, fontSize = 11.sp)
+                        }
+                    }
+                    Text("RATE ›", color = NeonGoldTertiary, fontWeight = FontWeight.Black, fontSize = 12.sp)
                 }
             }
 

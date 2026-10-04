@@ -88,13 +88,16 @@ import com.example.ui.theme.TextSecondary
 fun LevelMapScreen(
     profile: PlayerProfile,
     levelProgressList: List<LevelProgress>,
+    isDailyLoginClaimable: Boolean = false,
     onSelectLevel: (Int, Boolean) -> Unit,
     onOpenShop: () -> Unit,
     onOpenDailySpin: () -> Unit,
+    onOpenDailyLogin: () -> Unit = {},
     onOpenMonetizationStats: () -> Unit,
     onOpenSettings: () -> Unit = {},
     onOpenHowToPlay: () -> Unit = {},
     onOpenAchievements: () -> Unit = {},
+    onOpenFeedback: () -> Unit = {},
     onBackToMainMenu: () -> Unit = {},
     onWatchAdForLives: () -> Unit,
     onToggleSound: () -> Unit,
@@ -199,8 +202,11 @@ fun LevelMapScreen(
             profile = profile,
             highestLevel = highestUnlockedLevel,
             totalStars = levelProgressList.sumOf { it.stars },
+            isDailyLoginClaimable = isDailyLoginClaimable,
             onOpenShop = onOpenShop,
             onOpenSettings = onOpenSettings,
+            onOpenFeedback = onOpenFeedback,
+            onOpenDailyLogin = onOpenDailyLogin,
             onBackToMainMenu = onBackToMainMenu,
             modifier = Modifier.align(Alignment.TopCenter)
         )
@@ -240,8 +246,11 @@ private fun TopMapHudBar(
     profile: PlayerProfile,
     highestLevel: Int,
     totalStars: Int,
+    isDailyLoginClaimable: Boolean = false,
     onOpenShop: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenFeedback: () -> Unit = {},
+    onOpenDailyLogin: () -> Unit = {},
     onBackToMainMenu: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -257,7 +266,7 @@ private fun TopMapHudBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 6.dp),
+                .padding(horizontal = 8.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -301,21 +310,25 @@ private fun TopMapHudBar(
                 }
             }
 
-            // Current Level Badge
+            // Daily Login Gift Booster Pill
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color.Black.copy(alpha = 0.4f))
-                    .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                    .background(if (isDailyLoginClaimable) Color(0x40FFD700) else Color(0x25FFFFFF))
+                    .border(1.2.dp, if (isDailyLoginClaimable) NeonGoldTertiary else Color.White.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                    .clickable { onOpenDailyLogin() }
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("⭐", fontSize = 13.sp)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("$totalStars", color = NeonGoldTertiary, fontWeight = FontWeight.Black, fontSize = 12.sp)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("• Lvl $highestLevel", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("🎁", fontSize = 14.sp)
+                    Spacer(modifier = Modifier.width(3.dp))
+                    Text(
+                        text = if (isDailyLoginClaimable) "CLAIM" else "Day ${(profile.dailyLoginStreak - 1).coerceAtLeast(0) % 7 + 1}",
+                        color = if (isDailyLoginClaimable) NeonGreenAccent else Color.White,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 11.sp
+                    )
                 }
             }
 
@@ -326,19 +339,19 @@ private fun TopMapHudBar(
                     .clip(RoundedCornerShape(14.dp))
                     .background(Color(0x35FFD700))
                     .border(1.2.dp, NeonGoldTertiary, RoundedCornerShape(14.dp))
-                    .padding(horizontal = 11.dp, vertical = 5.dp)
+                    .padding(horizontal = 9.dp, vertical = 5.dp)
                     .clickable { onOpenShop() }
             ) {
-                Text("🪙", fontSize = 16.sp)
+                Text("🪙", fontSize = 15.sp)
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "${profile.coins}",
                     color = NeonGoldTertiary,
                     fontWeight = FontWeight.Black,
-                    fontSize = 13.sp
+                    fontSize = 12.sp
                 )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("+", color = Color.White, fontWeight = FontWeight.Black, fontSize = 13.sp)
+                Spacer(modifier = Modifier.width(3.dp))
+                Text("+", color = Color.White, fontWeight = FontWeight.Black, fontSize = 12.sp)
             }
         }
     }

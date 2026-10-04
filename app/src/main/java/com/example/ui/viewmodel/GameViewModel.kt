@@ -39,7 +39,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         application,
         AppDatabase::class.java,
         "candy_crush_glass.db"
-    ).build()
+    ).fallbackToDestructiveMigration().build()
 
     val repository = GameRepository(db.levelProgressDao(), db.playerProfileDao())
     val adManager = AdManager()
@@ -76,10 +76,22 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     // Dialogs State
     var showShopDialog = MutableStateFlow(false)
     var showDailySpinDialog = MutableStateFlow(false)
+    var showDailyLoginDialog = MutableStateFlow(false)
     var showMonetizationDialog = MutableStateFlow(false)
     var showSettingsDialog = MutableStateFlow(false)
     var showHowToPlayDialog = MutableStateFlow(false)
     var showAchievementsDialog = MutableStateFlow(false)
+    var showFeedbackDialog = MutableStateFlow(false)
+
+    // Daily Login Reward State
+    val isDailyLoginClaimable: StateFlow<Boolean> = playerProfile
+        .map { profile ->
+            isDifferentCalendarDay(profile.lastDailyLoginDate, System.currentTimeMillis())
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    // Track if feedback has been requested to avoid nagging
+    private var hasPromptedFeedbackForLevel = mutableSetOf<Int>()
 
     // User notice toast / popup state
     private val _userMessage = MutableStateFlow<String?>(null)
@@ -101,10 +113,17 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             repository.checkAndRegenerateLives()
         }
 
-        // Show App Open Ad on launch after brief delay
+        // Show App Open Ad on launch after brief delay, then check daily login rewards
         viewModelScope.launch {
             delay(1200)
             adManager.showAppOpenAd()
+            delay(800)
+            // Check if daily login reward is ready to be claimed
+            val profile = repository.playerProfile.map { it ?: PlayerProfile() }
+            val current = playerProfile.value
+            if (isDifferentCalendarDay(current.lastDailyLoginDate, System.currentTimeMillis())) {
+                showDailyLoginDialog.value = true
+            }
         }
 
         // Periodic lives regeneration check
@@ -194,6 +213,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     else -> 1
                 }
                 repository.completeLevel(lvl, stars, state.currentScore)
+
+                // Prompt feedback after playing to a certain level milestone (Level 3, 5, 10, 20)
+                if ((lvl == 3 || lvl == 5 || lvl == 10 || lvl % 20 == 0) && lvl !in hasPromptedFeedbackForLevel) {
+                    hasPromptedFeedbackForLevel.add(lvl)
+                    showFeedbackDialog.value = true
+                }
             }
         }
     }
@@ -360,10 +385,55 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun rewardFeedbackCoins(coins: Int = 150) {
+        viewModelScope.launch {
+            repository.addCoins(coins)
+            soundSynth.playWinFanfare()
+            _userMessage.value = "⭐ Thank you! +$coins Bonus Coins Added! 🪙"
+        }
+    }
+
+    fun openFeedbackDialog() {
+        showFeedbackDialog.value = true
+    }
+
+    fun claimDailyLoginReward(reward: com.example.ui.screens.DailyLoginReward) {
+        viewModelScope.launch {
+            val current = playerProfile.value
+            val now = System.currentTimeMillis()
+            val newStreak = current.dailyLoginStreak + 1
+
+            repository.updateProfile { p ->
+                p.copy(
+                    lastDailyLoginDate = now,
+                    dailyLoginStreak = newStreak,
+                    coins = p.coins + reward.coins,
+                    hammerBoosters = p.hammerBoosters + reward.hammer,
+                    swapBoosters = p.swapBoosters + reward.swap,
+                    colorBombBoosters = p.colorBombBoosters + reward.bomb
+                )
+            }
+            soundSynth.playWinFanfare()
+            _userMessage.value = "🎁 Claimed ${reward.title} Reward: ${reward.description}!"
+        }
+    }
+
+    fun openDailyLoginDialog() {
+        showDailyLoginDialog.value = true
+    }
+
     fun toggleSound() {
         viewModelScope.launch {
             val current = playerProfile.value
             repository.updateProfile { it.copy(soundEnabled = !current.soundEnabled) }
         }
     }
+}
+
+private fun isDifferentCalendarDay(timestamp1: Long, timestamp2: Long): Boolean {
+    if (timestamp1 == 0L) return true
+    val cal1 = java.util.Calendar.getInstance().apply { timeInMillis = timestamp1 }
+    val cal2 = java.util.Calendar.getInstance().apply { timeInMillis = timestamp2 }
+    return cal1.get(java.util.Calendar.YEAR) != cal2.get(java.util.Calendar.YEAR) ||
+            cal1.get(java.util.Calendar.DAY_OF_YEAR) != cal2.get(java.util.Calendar.DAY_OF_YEAR)
 }

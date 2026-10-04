@@ -533,14 +533,21 @@ class Match3Engine(
         when (special) {
             SpecialType.STRIPED_HORIZONTAL -> {
                 onSound("line", 1)
+                onHaptic()
+                showComboPopup("STRIPED LINE BLAST!", c.toFloat(), r.toFloat())
                 clearRow(r)
             }
             SpecialType.STRIPED_VERTICAL -> {
                 onSound("line", 1)
+                onHaptic()
+                showComboPopup("STRIPED COLUMN BLAST!", c.toFloat(), r.toFloat())
                 clearCol(c)
             }
             SpecialType.WRAPPED_BOMB -> {
-                onSound("bomb", 2)
+                onSound("bomb", 3)
+                onHaptic()
+                showComboPopup("WRAPPED 3x3 BLAST!", c.toFloat(), r.toFloat())
+                // Classic standard 3x3 explosion area (9 tiles)
                 for (dr in -1..1) {
                     for (dc in -1..1) {
                         val nr = r + dr
@@ -553,11 +560,14 @@ class Match3Engine(
                 }
             }
             SpecialType.COLOR_BOMB -> {
-                onSound("color_bomb", 2)
-                val randomColor = CandyColor.random(config.colorCount)
+                onSound("color_bomb", 3)
+                onHaptic()
+                showComboPopup("COLOR BLAST!", c.toFloat(), r.toFloat())
+                val targetColor = CandyColor.random(config.colorCount)
                 for (rr in 0 until rows) {
                     for (cc in 0 until cols) {
-                        if (board[rr][cc]?.color == randomColor) {
+                        val tileColor = board[rr][cc]?.color
+                        if (tileColor == targetColor) {
                             damageObstaclesAt(rr, cc)
                             clearTile(rr, cc)
                         }
@@ -736,7 +746,8 @@ class Match3Engine(
             "hammer" -> {
                 onSound("bomb", 3)
                 onHaptic()
-                showComboPopup("HAMMER SMASH!", c.toFloat(), r.toFloat())
+                showComboPopup("HAMMER SMASH! 🔨", c.toFloat(), r.toFloat())
+                // Smashes the targeted tile and removes obstacle at impact point
                 damageObstaclesAt(r, c)
                 clearTile(r, c)
                 resolveCascades(1, onStateUpdate)
@@ -744,14 +755,30 @@ class Match3Engine(
             "bomb" -> {
                 onSound("color_bomb", 3)
                 onHaptic()
-                showComboPopup("RAINBOW BOMB!", c.toFloat(), r.toFloat())
-                board[r][c] = CandyTile(
-                    id = UUID.randomUUID().toString(),
-                    row = r,
-                    col = c,
-                    color = CandyColor.RED,
-                    special = SpecialType.COLOR_BOMB
-                )
+                showComboPopup("COLOR BOMB! 🌈", c.toFloat(), r.toFloat())
+                // Clears all candies of the tapped tile's color
+                val targetColor = board[r][c]?.color ?: CandyColor.random(config.colorCount)
+                addScore(1500, c.toFloat(), r.toFloat())
+                for (rr in 0 until rows) {
+                    for (cc in 0 until cols) {
+                        if (board[rr][cc]?.color == targetColor) {
+                            damageObstaclesAt(rr, cc)
+                            clearTile(rr, cc)
+                        }
+                    }
+                }
+                resolveCascades(1, onStateUpdate)
+            }
+            "swap" -> {
+                onSound("swap", 2)
+                onHaptic()
+                showComboPopup("FREE HAND SWAP! 🔄", c.toFloat(), r.toFloat())
+                // Allows user to freely select any adjacent or distant tile to swap without consuming moves
+                selectedTile = r to c
+                updateTileSelection(r, c, true)
+                isBusy = false
+                onStateUpdate(getState())
+                return
             }
         }
         checkLevelStatus()

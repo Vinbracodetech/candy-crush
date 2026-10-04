@@ -42,28 +42,19 @@ class AdManager {
 
     private var levelsSinceLastInterstitial = 0
 
-    // Cooldown in milliseconds for standard rewarded ads (10 minutes = 600,000 ms)
-    val rewardedCooldownMs: Long = 10 * 60 * 1000L
-    private val _lastRewardedAdTime = MutableStateFlow(0L)
-    val lastRewardedAdTime: StateFlow<Long> = _lastRewardedAdTime.asStateFlow()
+    // Cooldown duration in milliseconds: 5 minutes across all reward activities
+    val defaultCooldownMs: Long = 5 * 60 * 1000L
 
-    // Specific cooldown for Free Coins via Ad: 15 minutes = 900,000 ms
-    val coinsAdCooldownMs: Long = 15 * 60 * 1000L
-    private val _lastCoinsAdTime = MutableStateFlow(0L)
-    val lastCoinsAdTime: StateFlow<Long> = _lastCoinsAdTime.asStateFlow()
+    // Independent timestamps for each ad reward reason so one never locks out another
+    private val _lastAdTimes = MutableStateFlow<Map<RewardReason, Long>>(emptyMap())
+    val lastAdTimes: StateFlow<Map<RewardReason, Long>> = _lastAdTimes.asStateFlow()
 
     fun getRemainingRewardedCooldownSeconds(reason: RewardReason? = null): Long {
-        if (reason == RewardReason.COINS_PACK) {
-            val elapsed = System.currentTimeMillis() - _lastCoinsAdTime.value
-            return if (elapsed < coinsAdCooldownMs) {
-                (coinsAdCooldownMs - elapsed) / 1000L
-            } else {
-                0L
-            }
-        }
-        val elapsed = System.currentTimeMillis() - _lastRewardedAdTime.value
-        return if (elapsed < rewardedCooldownMs) {
-            (rewardedCooldownMs - elapsed) / 1000L
+        if (reason == null) return 0L
+        val lastTime = _lastAdTimes.value[reason] ?: 0L
+        val elapsed = System.currentTimeMillis() - lastTime
+        return if (elapsed < defaultCooldownMs) {
+            (defaultCooldownMs - elapsed) / 1000L
         } else {
             0L
         }
@@ -212,10 +203,8 @@ class AdManager {
                 }
             }
             rewardedAd?.show(activity) { rewardItem ->
-                if (reason == RewardReason.COINS_PACK) {
-                    _lastCoinsAdTime.value = System.currentTimeMillis()
-                } else {
-                    _lastRewardedAdTime.value = System.currentTimeMillis()
+                _lastAdTimes.update { currentMap ->
+                    currentMap + (reason to System.currentTimeMillis())
                 }
                 onRewardGranted(reason)
             }
@@ -235,10 +224,8 @@ class AdManager {
                 }
             }
             rewardedInterstitialAd?.show(activity) { rewardItem ->
-                if (reason == RewardReason.COINS_PACK) {
-                    _lastCoinsAdTime.value = System.currentTimeMillis()
-                } else {
-                    _lastRewardedAdTime.value = System.currentTimeMillis()
+                _lastAdTimes.update { currentMap ->
+                    currentMap + (reason to System.currentTimeMillis())
                 }
                 onRewardGranted(reason)
             }
@@ -258,7 +245,7 @@ class AdManager {
         onCooldownActive: ((remainingSeconds: Long) -> Unit)? = null,
         onDismiss: () -> Unit = {}
     ) {
-        val remaining = getRemainingRewardedCooldownSeconds()
+        val remaining = getRemainingRewardedCooldownSeconds(reason)
         if (remaining > 0) {
             onCooldownActive?.invoke(remaining)
             onDismiss()
@@ -280,7 +267,9 @@ class AdManager {
                 }
             }
             rewardedInterstitialAd?.show(activity) { rewardItem ->
-                _lastRewardedAdTime.value = System.currentTimeMillis()
+                _lastAdTimes.update { currentMap ->
+                    currentMap + (reason to System.currentTimeMillis())
+                }
                 onRewardGranted(reason)
             }
             _adStats.update { it.copy(rewardedImpressions = it.rewardedImpressions + 1) }

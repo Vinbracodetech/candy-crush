@@ -382,6 +382,7 @@ fun GameSettingsDialog(
     onOpenHowToPlay: () -> Unit,
     onOpenAchievements: () -> Unit,
     onOpenShop: () -> Unit,
+    onOpenFeedback: () -> Unit = {},
     onDismiss: () -> Unit
 ) {
     var hapticEnabled by remember { mutableStateOf(true) }
@@ -503,11 +504,25 @@ fun GameSettingsDialog(
                     Text("📖 How to Play & Special Candy Guide", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 }
 
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Rate & Feedback on Play Store & In-App
+                GlassButton(
+                    onClick = {
+                        onDismiss()
+                        onOpenFeedback()
+                    },
+                    brush = ButtonGoldGlassBrush,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("⭐ Rate Game & Feedback (+150 🪙)", color = Color.White, fontWeight = FontWeight.Black, fontSize = 13.sp)
+                }
+
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // App Info & Version
                 Text(
-                    "Candy Crush Glass v1.0.4",
+                    "Candy Crush Glass v1.0.5",
                     color = TextMuted,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold

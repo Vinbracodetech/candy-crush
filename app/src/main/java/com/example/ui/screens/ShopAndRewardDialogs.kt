@@ -66,26 +66,38 @@ import kotlin.random.Random
 @Composable
 fun BoosterShopDialog(
     profile: PlayerProfile,
-    cooldownSeconds: Long = 0L,
-    coinsCooldownSeconds: Long = 0L,
+    getCooldownSeconds: (RewardReason) -> Long = { 0L },
     onBuyBooster: (type: String, cost: Int) -> Unit,
     onBuyLives: (cost: Int) -> Unit = {},
     onWatchAdForReward: (RewardReason) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val isCooldown = cooldownSeconds > 0L
-    val cooldownText = if (isCooldown) {
-        val m = cooldownSeconds / 60
-        val s = cooldownSeconds % 60
-        "${m}m ${s}s"
-    } else ""
+    fun formatCooldown(secs: Long): String {
+        if (secs <= 0L) return ""
+        val m = secs / 60
+        val s = secs % 60
+        return "${m}m ${s}s"
+    }
 
-    val isCoinsCooldown = coinsCooldownSeconds > 0L
-    val coinsCooldownText = if (isCoinsCooldown) {
-        val m = coinsCooldownSeconds / 60
-        val s = coinsCooldownSeconds % 60
-        "${m}m ${s}s"
-    } else ""
+    val coinsCooldown = getCooldownSeconds(RewardReason.COINS_PACK)
+    val isCoinsCooldown = coinsCooldown > 0L
+    val coinsCooldownText = formatCooldown(coinsCooldown)
+
+    val livesCooldown = getCooldownSeconds(RewardReason.EXTRA_LIVES)
+    val isLivesCooldown = livesCooldown > 0L
+    val livesCooldownText = formatCooldown(livesCooldown)
+
+    val hammerCooldown = getCooldownSeconds(RewardReason.FREE_HAMMER)
+    val isHammerCooldown = hammerCooldown > 0L
+    val hammerCooldownText = formatCooldown(hammerCooldown)
+
+    val swapCooldown = getCooldownSeconds(RewardReason.FREE_SWAP)
+    val isSwapCooldown = swapCooldown > 0L
+    val swapCooldownText = formatCooldown(swapCooldown)
+
+    val bombCooldown = getCooldownSeconds(RewardReason.COLOR_BOMB_START)
+    val isBombCooldown = bombCooldown > 0L
+    val bombCooldownText = formatCooldown(bombCooldown)
 
     Dialog(onDismissRequest = onDismiss) {
         GlassCard(
@@ -259,8 +271,8 @@ fun BoosterShopDialog(
                                     onDismiss()
                                     onWatchAdForReward(RewardReason.EXTRA_LIVES)
                                 },
-                                enabled = !isCooldown,
-                                brush = if (!isCooldown) {
+                                enabled = !isLivesCooldown,
+                                brush = if (!isLivesCooldown) {
                                     Brush.horizontalGradient(listOf(Color(0xFF8E44AD), Color(0xFF6C3483)))
                                 } else {
                                     Brush.linearGradient(listOf(Color(0x22FFFFFF), Color(0x11FFFFFF)))
@@ -270,7 +282,7 @@ fun BoosterShopDialog(
                             ) {
                                 Icon(Icons.Default.Videocam, "Ad", tint = Color.White, modifier = Modifier.size(14.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(if (isCooldown) cooldownText else "Free Ad", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                Text(if (isLivesCooldown) livesCooldownText else "Free Ad", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                             }
                             // Buy with Coins (200 coins)
                             GlassButton(
@@ -317,8 +329,8 @@ fun BoosterShopDialog(
                     ownedCount = profile.hammerBoosters,
                     coinCost = 80,
                     canAfford = profile.coins >= 80,
-                    isCooldown = isCooldown,
-                    cooldownText = cooldownText,
+                    isCooldown = isHammerCooldown,
+                    cooldownText = hammerCooldownText,
                     onBuy = { onBuyBooster("hammer", 80) },
                     onWatchAd = {
                         onDismiss()
@@ -336,8 +348,8 @@ fun BoosterShopDialog(
                     ownedCount = profile.swapBoosters,
                     coinCost = 100,
                     canAfford = profile.coins >= 100,
-                    isCooldown = isCooldown,
-                    cooldownText = cooldownText,
+                    isCooldown = isSwapCooldown,
+                    cooldownText = swapCooldownText,
                     onBuy = { onBuyBooster("swap", 100) },
                     onWatchAd = {
                         onDismiss()
@@ -355,8 +367,8 @@ fun BoosterShopDialog(
                     ownedCount = profile.colorBombBoosters,
                     coinCost = 120,
                     canAfford = profile.coins >= 120,
-                    isCooldown = isCooldown,
-                    cooldownText = cooldownText,
+                    isCooldown = isBombCooldown,
+                    cooldownText = bombCooldownText,
                     onBuy = { onBuyBooster("bomb", 120) },
                     onWatchAd = {
                         onDismiss()

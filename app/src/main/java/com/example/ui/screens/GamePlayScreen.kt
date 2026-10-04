@@ -97,6 +97,7 @@ fun GamePlayScreen(
     onNextLevel: () -> Unit,
     onRetryLevel: () -> Unit,
     onExitToMap: () -> Unit,
+    onOpenFeedback: () -> Unit = {},
     onToggleSound: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -118,7 +119,34 @@ fun GamePlayScreen(
                 onPause = { isPaused = true }
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            // Active Booster Instruction Banner
+            if (engineState.activeBooster != null) {
+                val boosterName = when (engineState.activeBooster) {
+                    "hammer" -> "🔨 LOLLIPOP HAMMER ACTIVE: Tap any candy or obstacle to smash it!"
+                    "bomb" -> "🌈 COLOR BOMB ACTIVE: Tap any candy to clear all candies of that color!"
+                    "swap" -> "🔄 FREE SWAP ACTIVE: Tap any tile to swap freely without consuming moves!"
+                    else -> "POWER-UP BOOSTER ACTIVE"
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Brush.horizontalGradient(listOf(Color(0xFFFF2A85), Color(0xFFFFD000))))
+                        .border(1.5.dp, Color.White, RoundedCornerShape(10.dp))
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = boosterName,
+                        color = Color.White,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 11.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
 
             // Main Match-3 Board Area
             Box(
@@ -233,7 +261,8 @@ fun GamePlayScreen(
                 targetScore2 = levelConfig.targetScore2Star,
                 targetScore3 = levelConfig.targetScore3Star,
                 onNextLevel = onNextLevel,
-                onExitToMap = onExitToMap
+                onExitToMap = onExitToMap,
+                onOpenFeedback = onOpenFeedback
             )
         }
 
@@ -513,26 +542,58 @@ private fun BoosterSlotButton(
     isActive: Boolean,
     onClick: () -> Unit
 ) {
+    val infiniteTransition = rememberInfiniteTransition(label = "boosterPulse")
+    val pulseBorder by infiniteTransition.animateFloat(
+        initialValue = 1.2f,
+        targetValue = 2.5f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseBorder"
+    )
+
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
-            .background(if (isActive) Color(0x66FF2A85) else Color(0x22FFFFFF))
+            .background(
+                if (isActive) Brush.radialGradient(listOf(Color(0xFFFF2A85), Color(0xFF6A0D91)))
+                else Brush.linearGradient(listOf(Color(0x35FFFFFF), Color(0x18FFFFFF)))
+            )
             .border(
-                1.2.dp,
-                if (isActive) NeonPinkPrimary else Color.White.copy(alpha = 0.25f),
-                RoundedCornerShape(12.dp)
+                width = if (isActive) pulseBorder.dp else 1.2.dp,
+                brush = if (isActive) Brush.linearGradient(listOf(Color(0xFFFFD000), Color.White))
+                else Brush.linearGradient(listOf(Color.White.copy(alpha = 0.4f), Color(0x3300F0FF))),
+                shape = RoundedCornerShape(12.dp)
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .padding(horizontal = 9.dp, vertical = 5.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(icon, fontSize = 16.sp)
+                Text(icon, fontSize = 18.sp)
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("$count", color = if (count > 0) NeonGoldTertiary else TextMuted, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(if (count > 0) Color(0xFFFFD000) else Color(0x44FFFFFF))
+                        .padding(horizontal = 5.dp, vertical = 1.dp)
+                ) {
+                    Text(
+                        text = "$count",
+                        color = if (count > 0) Color.Black else Color.White,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 11.sp
+                    )
+                }
             }
-            Text(name, color = if (isActive) NeonPinkPrimary else TextSecondary, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+            Text(
+                text = if (isActive) "ACTIVE" else name,
+                color = if (isActive) Color(0xFFFFD000) else Color.White,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Black
+            )
         }
     }
 }
@@ -545,7 +606,8 @@ private fun LevelWinDialog(
     targetScore2: Int,
     targetScore3: Int,
     onNextLevel: () -> Unit,
-    onExitToMap: () -> Unit
+    onExitToMap: () -> Unit,
+    onOpenFeedback: () -> Unit = {}
 ) {
     val starsEarned = when {
         score >= targetScore3 -> 3
@@ -604,7 +666,7 @@ private fun LevelWinDialog(
                     Text("🪙 +${starsEarned * 15 + 25} Coins Earned!", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Actions
                 GlassButton(
@@ -613,6 +675,17 @@ private fun LevelWinDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("NEXT LEVEL ➔", color = Color.White, fontWeight = FontWeight.Black, fontSize = 16.sp)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Rate & Feedback on Milestone
+                GlassButton(
+                    onClick = onOpenFeedback,
+                    brush = ButtonGoldGlassBrush,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("⭐ RATE LEVEL & FEEDBACK (+150 🪙)", color = Color.White, fontWeight = FontWeight.Black, fontSize = 12.sp)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
